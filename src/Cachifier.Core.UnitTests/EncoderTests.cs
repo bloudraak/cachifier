@@ -26,44 +26,30 @@
 
 namespace Cachifier
 {
-    using System.Diagnostics;
-    using System.IO;
-    using System.Security.Cryptography;
-    using Cachifier.Annotations;
+    using System;
+    using NUnit.Framework;
 
-    /// <summary>
-    ///     Represents a class that generates a hash
-    /// </summary>
-    public sealed class Hashifier : IHashifier
+    [TestFixture]
+    public sealed class EncoderTests
     {
-        /// <summary>
-        ///     Generates a SHA256 hash from a byte array
-        /// </summary>
-        /// <param name="bytes"></param>
-        /// <returns></returns>
-        [PublicAPI]
-        public byte[] Hashify(byte[] bytes)
+        [Test]
+        public void Encode()
         {
-            using (var algorithm = HashAlgorithm.Create("SHA256"))
+            // Arrange
+            var target = new Encoder();
+            var expected = "pml241";
+            var bytes = new Byte[]
             {
-                Debug.Assert(algorithm != null, "algorithm != null");
-                return algorithm.ComputeHash(bytes);
-            }
-        }
+                0x01,
+                0x02,
+                0x03,
+                0x04
+            };
+            // Act
+            string actual = target.Encode(bytes);
 
-        /// <summary>
-        ///     Generates a SHA256 hash from a byte array
-        /// </summary>
-        /// <param name="stream"></param>
-        /// <returns></returns>
-        [PublicAPI]
-        public byte[] Hashify(Stream stream)
-        {
-            using (var algorithm = HashAlgorithm.Create("SHA256"))
-            {
-                Debug.Assert(algorithm != null, "algorithm != null");
-                return algorithm.ComputeHash(stream);
-            }
+            // Assert
+            Assert.AreEqual(expected, actual, "Expected the base36 encoding of {0} to be '{1}'", bytes.ToString(", "),expected);
         }
     }
 }

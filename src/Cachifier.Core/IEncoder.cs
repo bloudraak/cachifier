@@ -26,44 +26,40 @@
 
 namespace Cachifier
 {
-    using System.Diagnostics;
-    using System.IO;
-    using System.Security.Cryptography;
     using Cachifier.Annotations;
 
     /// <summary>
-    ///     Represents a class that generates a hash
+    ///     Represents an encoder
     /// </summary>
-    public sealed class Hashifier : IHashifier
+    /// <remarks>
+    ///     There are cases when you'd like to perform custom encoding of a string, for example to generate a valid filename.
+    /// </remarks>
+    public interface IEncoder
     {
         /// <summary>
-        ///     Generates a SHA256 hash from a byte array
+        ///     Encodes a byte array to base36
         /// </summary>
-        /// <param name="bytes"></param>
-        /// <returns></returns>
+        /// <param name="bytes">The bytes to convert to</param>
+        /// <returns>The base36 encoded version of a byte array</returns>
         [PublicAPI]
-        public byte[] Hashify(byte[] bytes)
-        {
-            using (var algorithm = HashAlgorithm.Create("SHA256"))
-            {
-                Debug.Assert(algorithm != null, "algorithm != null");
-                return algorithm.ComputeHash(bytes);
-            }
-        }
+        string Encode(byte[] bytes);
 
         /// <summary>
-        ///     Generates a SHA256 hash from a byte array
+        ///     Encodes a byte array to a particular alphabet
         /// </summary>
-        /// <param name="stream"></param>
-        /// <returns></returns>
+        /// <param name="bytes">The bytes to convert</param>
+        /// <param name="alphabet">The alphabet to convert too</param>
+        /// <returns>The encoded byte array</returns>
         [PublicAPI]
-        public byte[] Hashify(Stream stream)
-        {
-            using (var algorithm = HashAlgorithm.Create("SHA256"))
-            {
-                Debug.Assert(algorithm != null, "algorithm != null");
-                return algorithm.ComputeHash(stream);
-            }
-        }
+        string Encode(byte[] bytes, string alphabet);
+
+        /// <summary>
+        ///     Encodes a byte array to a particular alphabet
+        /// </summary>
+        /// <param name="bytes">The bytes to convert</param>
+        /// <param name="alphabet">The alphabet to convert too</param>
+        /// <returns>The encoded byte array</returns>
+        [PublicAPI]
+        string Encode(byte[] bytes, char[] alphabet);
     }
 }
