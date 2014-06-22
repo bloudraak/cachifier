@@ -49,14 +49,28 @@ namespace Cachifier
             Directory.Delete(this._tempPath, true);
         }
 
+        /// <summary>
+        /// Verifies that the static web resources were processed correctly.
+        /// </summary>
+        /// <remarks>
+        /// This tets verifies that 
+        /// <ul>
+        ///     <li>The filenames are renamed accordingly</li>
+        ///     <li>The internal references are fixed</li>
+        /// </ul>
+        /// </remarks>
         [Test]
         public void Process()
         {
             // Arrange
             var imagePath = Path.Combine(_tempPath, "Image1.jpg");
             File.WriteAllBytes(imagePath, Resources.Image1);
-
             var expectedHashedImagePath = Path.Combine(_tempPath, "kna98mczkhzth33v1zzy10in814243cflqzjf7dlezrgmcddg1.jpg");
+
+            var stylesheetPath = Path.Combine(_tempPath, "Styles.css");
+            File.WriteAllText(stylesheetPath, ".image1 {background-image:url('Image1.jpg');}");
+            var expectedHashedStylesheetPath = Path.Combine(_tempPath, "vgtnhq3mduz5kf356dr0ohej9uxzjgu1eykdcfppzabso6obj.css");
+           
             var target = new Processor();
 
             var resources = new[]
@@ -64,6 +78,10 @@ namespace Cachifier
                 new Resource()
                 {
                     Path = imagePath
+                },
+                new Resource()
+                {
+                    Path = stylesheetPath
                 }
             };
 
@@ -73,6 +91,16 @@ namespace Cachifier
             // Assert
             Assert.AreEqual(expectedHashedImagePath, resources[0].HashedPath, "The hashed path is incorrect");
             Assert.IsTrue(File.Exists(resources[0].HashedPath), "Expected the hashed path '{0}' to exists", resources[0].HashedPath);
+
+            Assert.AreEqual(expectedHashedStylesheetPath, resources[1].HashedPath, "The hashed path is incorrect");
+            Assert.IsTrue(File.Exists(resources[1].HashedPath), "Expected the hashed path '{0}' to exists", resources[0].HashedPath);
+
+            var stylesheetContents = File.ReadAllText(resources[1].HashedPath);
+            Console.WriteLine("=== {0} ===", resources[1].HashedPath);
+            Console.WriteLine(stylesheetContents);
+            Console.WriteLine("======");
+            var exists = stylesheetContents.Contains(".image1 {background-image:url('"+Path.GetFileName(resources[0].HashedPath+"');}"));
+            Assert.IsTrue(exists, "Expects the hashed file '{0}' to have a reference to '{1}' rather than 'Image1.jpg'", resources[1].HashedPath, resources[0].HashedPath);
         }
     }
 }

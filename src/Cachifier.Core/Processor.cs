@@ -27,6 +27,7 @@
 namespace Cachifier
 {
     using System.IO;
+    using Microsoft.Win32;
 
     /// <summary>
     /// Represents a Cashifier processor
@@ -59,6 +60,61 @@ namespace Cachifier
                     }
                 }
             }
+
+            foreach (var resource in resources)
+            {
+                if (!IsTextResource(resource))
+                {
+                    continue;
+                }
+
+                var text = File.ReadAllText(resource.HashedPath);
+                foreach (var r in resources)
+                {
+                    text = text.Replace(Path.GetFileName(r.Path), Path.GetFileName(r.HashedPath));
+                }
+                File.WriteAllText(resource.HashedPath, text);
+            }
+
+            
+        }
+
+        private bool IsTextResource(Resource resource)
+        {
+            var mimeType = GetMimeType(resource.Path);
+            switch (mimeType)
+            {
+                case "text/css":
+                case "text/text":
+                case "text/javascript":
+                case "application/x-javascript":
+                    return true;
+            }
+            return false;
+        }
+
+        private string GetMimeType(string path)
+        {
+            string mimeType = "application/unknown";
+            var extension = Path.GetExtension(path);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                return mimeType;
+            }
+
+            RegistryKey regKey = Registry.ClassesRoot.OpenSubKey(extension);
+            if (regKey == null)
+            {
+                return mimeType;
+            }
+
+            object contentType = regKey.GetValue("Content Type");
+            if (contentType == null)
+            {
+                return mimeType;
+            }
+
+            return contentType.ToString();
         }
     }
 }
