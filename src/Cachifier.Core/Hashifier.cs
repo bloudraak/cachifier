@@ -65,5 +65,18 @@ namespace Cachifier
                 return algorithm.ComputeHash(stream);
             }
         }
+
+        /// <summary>
+        ///     Generates a SHA256 hash from a path
+        /// </summary>
+        /// <param name="path">The path of a file to generated a hash from</param>
+        /// <returns>A byte array</returns>
+        public byte[] Hashify(string path)
+        {
+            using (var stream = File.OpenRead(path))
+            {
+                return this.Hashify(stream);
+            }
+        }
     }
 }
