@@ -26,10 +26,41 @@
 
 namespace Cachifier
 {
+    using System.Diagnostics;
+    using System.IO;
+    using System.Security.Cryptography;
+
     /// <summary>
-    ///     Represents a task to Cachify a website
+    ///     Represents a class that generates a hash
     /// </summary>
-    public class CachifyTask
+    public sealed class Hashifier : IHashifier
     {
+        /// <summary>
+        ///     Generates a SHA256 hash from a byte array
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public byte[] Hashify(byte[] bytes)
+        {
+            using (var algorithm = HashAlgorithm.Create("SHA256"))
+            {
+                Debug.Assert(algorithm != null, "algorithm != null");
+                return algorithm.ComputeHash(bytes);
+            }
+        }
+
+        /// <summary>
+        ///     Generates a SHA256 hash from a byte array
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <returns></returns>
+        public byte[] Hashify(Stream stream)
+        {
+            using (var algorithm = HashAlgorithm.Create("SHA256"))
+            {
+                Debug.Assert(algorithm != null, "algorithm != null");
+                return algorithm.ComputeHash(stream);
+            }
+        }
     }
 }
