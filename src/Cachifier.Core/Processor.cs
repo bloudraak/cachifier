@@ -48,10 +48,11 @@ namespace Cachifier
         /// <summary>
         /// Process files
         /// </summary>
+        /// <param name="projectDirectory"></param>
         /// <param name="resources"></param>
-        public void Process(Resource[] resources)
+        public void Process(string projectDirectory, Resource[] resources)
         {
-            if (string.IsNullOrWhiteSpace(ProjectDirectory))
+            if (string.IsNullOrWhiteSpace(projectDirectory))
             {
                 throw new InvalidOperationException("The project directory is required");
             }
@@ -82,14 +83,14 @@ namespace Cachifier
             var map = new Dictionary<string, string>();
             foreach (var resource in resources)
             {
-                var path = GetRelativePath(resource.Path, ProjectDirectory);
-                var hashedPath = GetRelativePath(resource.HashedPath, ProjectDirectory);
+                var path = this.GetRelativePath(resource.Path, projectDirectory);
+                var hashedPath = this.GetRelativePath(resource.HashedPath, projectDirectory);
                 map.Add(path, hashedPath);
             }
 
             foreach (var resource in resources)
             {
-                if (!IsTextResource(resource))
+                if (!this.IsTextResource(resource))
                 {
                     continue;
                 }
@@ -155,6 +156,23 @@ namespace Cachifier
             }
             var folderUri = new Uri(baseFolder);
             return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
+        }
+
+        /// <summary>
+        /// Process a folder
+        /// </summary>
+        /// <param name="path">The path</param>
+        public void Process(string path)
+        {
+            var resources = new List<Resource>();
+            var files = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
+            foreach (var file in files)
+            {
+                var resource = new Resource();
+                resource.Path = file;
+                resources.Add(resource);
+            }
+            Process(path, resources.ToArray());
         }
     }
 }

@@ -74,7 +74,7 @@ namespace Cachifier
                 "vgtnhq3mduz5kf356dr0ohej9uxzjgu1eykdcfppzabso6obj.css");
 
             var target = new Processor();
-            target.ProjectDirectory = _tempPath;
+            _tempPath = _tempPath;
 
             var resources = new[]
             {
@@ -89,7 +89,7 @@ namespace Cachifier
             };
 
             // Act
-            target.Process(resources);
+            target.Process(this._tempPath, resources);
 
             // Assert
             Assert.AreEqual(expectedHashedImagePath, resources[0].HashedPath, "The hashed path is incorrect");
@@ -147,7 +147,7 @@ namespace Cachifier
                 "ldv77axkmmch62vr1i239j3its23z9xhvfr0gi8pnm4c2qcs02.css");
 
             var target = new Processor();
-            target.ProjectDirectory = _tempPath;
+            _tempPath = _tempPath;
 
             var resources = new[]
             {
@@ -166,7 +166,7 @@ namespace Cachifier
             };
 
             // Act
-            target.Process(resources);
+            target.Process(this._tempPath, resources);
 
             // Assert
             Assert.AreEqual(expectedHashedImageXPath, resources[0].HashedPath, "The hashed path is incorrect");
@@ -236,7 +236,7 @@ namespace Cachifier
                 "valwumxgedp6r7aoas4zwv9o60qljex9orjzc8e1dr5itb9bf1.css");
 
             var target = new Processor();
-            target.ProjectDirectory = _tempPath;
+            _tempPath = _tempPath;
 
             var resources = new[]
             {
@@ -255,7 +255,7 @@ namespace Cachifier
             };
 
             // Act
-            target.Process(resources);
+            target.Process(this._tempPath, resources);
 
             // Assert
             Assert.AreEqual(expectedHashedImageXPath, resources[0].HashedPath, "The hashed path is incorrect");
