@@ -27,14 +27,17 @@
 namespace Cachifier.Build.Tasks
 {
     using System;
+    using System.CodeDom.Compiler;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Text.RegularExpressions;
     using Cachifier.Build.Tasks.Annotations;
     using Microsoft.Build.Framework;
     using Microsoft.Build.Utilities;
+    using Encoder = Cachifier.Encoder;
 
     /// <summary>
     ///     Represents an Microsoft Build task for Cachifier
@@ -148,12 +151,12 @@ namespace Cachifier.Build.Tasks
 
                 foreach (var contentFile in this.EmbeddedResources)
                 {
-                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems);
+                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, true);
                 }
 
                 foreach (var contentFile in this.Content)
                 {
-                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems);
+                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, false);
                 }
 
                 if (Directory.Exists(outputDirectoryName))
@@ -248,7 +251,7 @@ namespace Cachifier.Build.Tasks
             IDictionary<string, string> mapping,
             string outputDirectoryName,
             ICollection<string> files,
-            ICollection<ITaskItem> outputItems)
+            ICollection<ITaskItem> outputItems, bool IsEmbeddedResource)
         {
             var path = contentFile.ItemSpec;
             var extension = Path.GetExtension(path);
@@ -274,7 +277,8 @@ namespace Cachifier.Build.Tasks
             var relativePath = Processor.GetRelativePath(fullPath, this.ProjectDirectory);
             var hashedFileName = Path.GetFileNameWithoutExtension(fullPath) + "," + encodedHashValue
                                  + Path.GetExtension(fullPath);
-            var outputPath = Path.Combine(outputDirectoryName, hashedFileName);
+            var outputPath = Path.Combine(this.ProjectDirectory, this.OutputPath, relativePath);
+            outputPath = Path.Combine(Path.GetDirectoryName(outputPath), hashedFileName);
             var relativeOutputPath = Processor.GetRelativePath(outputPath, this.ProjectDirectory);
 
             var directoryName = Path.GetDirectoryName(outputPath);
@@ -322,6 +326,8 @@ namespace Cachifier.Build.Tasks
             mapping.Add(relativePath, Processor.GetRelativePath(outputPath, outputDirectoryName));
             files.Add(outputPath);
             var taskItem = new TaskItem(outputPath);
+            taskItem.SetMetadata("OriginalRelativePath", relativePath);
+            taskItem.SetMetadata("IsEmbeddedResource", IsEmbeddedResource.ToString());
             outputItems.Add(taskItem);
         }
 

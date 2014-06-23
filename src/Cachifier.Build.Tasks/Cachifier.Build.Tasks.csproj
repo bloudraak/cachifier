@@ -37,7 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CachifierTask.cs" />
-    <Compile Include="GetCachifiedOutputs.cs" />
+    <Compile Include="GeneratePreApplicationStartMethodTask.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

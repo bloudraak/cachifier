@@ -1,9 +1,12 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" >
   <UsingTask AssemblyFile="S:\cachifier\src\Cachifier.Build.Tasks\bin\Debug\Cachifier.Build.Tasks.dll" TaskName="CachifierTask" />
-  <UsingTask AssemblyFile="S:\cachifier\src\Cachifier.Build.Tasks\bin\Debug\Cachifier.Build.Tasks.dll" TaskName="GetCachifiedOutputs" />
+  <UsingTask AssemblyFile="S:\cachifier\src\Cachifier.Build.Tasks\bin\Debug\Cachifier.Build.Tasks.dll" TaskName="GeneratePreApplicationStartMethodTask" />
   <PropertyGroup>
     <StaticOutputPath Condition="'$(StaticOutputPath)'==''">public</StaticOutputPath>
     <StaticProjectDirectory Condition="'$(StaticProjectDirectory)' == ''">$(MSBuildProjectDirectory)</StaticProjectDirectory>
+    <ScriptManagerPreApplicationStartClass Condition="'$(ScriptManagerPreApplicationStartClass)' == ''">ScriptManagerRegistrar</ScriptManagerPreApplicationStartClass>
+    <ScriptManagerPreApplicationStartPath Condition="'$(ScriptManagerPreApplicationStartPath)' == ''">$(MSBuildProjectDirectory)\$(ScriptManagerPreApplicationStartClass).cs</ScriptManagerPreApplicationStartPath>
+    <ScriptManagerPreApplicationStartRootNamespace Condition="'$(ScriptManagerPreApplicationStartRootNamespace)' == ''">$(RootNamespace)</ScriptManagerPreApplicationStartRootNamespace>
   </PropertyGroup>
   <PropertyGroup>
     <BuildDependsOn>
@@ -42,8 +45,15 @@
       OutputPath="$(StaticOutputPath)" 
       StaticExtensions="@(StaticExtension)"
       ProjectDirectory="$(StaticProjectDirectory)">
+      <Output TaskParameter="OutputItems" ItemName="StaticContent" />
     </CachifierTask>
-    <Message Text="%(Content.HashedFullPath)" />
+    <GeneratePreApplicationStartMethodTask 
+      Content="@(StaticContent)" 
+      SourcePath="$(ScriptManagerPreApplicationStartPath)" 
+      ClassName="$(ScriptManagerPreApplicationStartClass)" 
+      Namespace="$(ScriptManagerPreApplicationStartRootNamespace)"
+      OutputPath="$(StaticOutputPath)" 
+      ProjectDirectory="$(StaticProjectDirectory)" /> 
   </Target>
   <Target Name="CleanCachify">
     <RemoveDir Directories="$(StaticOutputPath)" />
