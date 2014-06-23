@@ -37,8 +37,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CachifierTask.cs" />
+    <Compile Include="GetCachifiedOutputs.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Cachifier.targets" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cachifier.Core\Cachifier.Core.csproj">
+      <Project>{e450e3ea-8eac-44e6-b979-32c0f0f08adf}</Project>
+      <Name>Cachifier.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

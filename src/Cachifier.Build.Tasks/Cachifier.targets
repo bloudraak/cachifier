@@ -1,0 +1,42 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" >
+  <UsingTask AssemblyFile="S:\cachifier\src\Cachifier.Build.Tasks\bin\Debug\Cachifier.Build.Tasks.dll" TaskName="CachifierTask" />
+  <UsingTask AssemblyFile="S:\cachifier\src\Cachifier.Build.Tasks\bin\Debug\Cachifier.Build.Tasks.dll" TaskName="GetCachifiedOutputs" />
+  <PropertyGroup>
+    <StaticOutputPath Condition="'$(StaticOutputPath)'==''">public</StaticOutputPath>
+    <StaticProjectDirectory Condition="'$(StaticProjectDirectory)' == ''">$(MSBuildProjectDirectory)</StaticProjectDirectory>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BuildDependsOn>
+      Cachify;
+      $(BuildDependsOn);
+    </BuildDependsOn>
+  </PropertyGroup>
+  <ItemGroup>
+    <StaticExtension Include=".jpg" />
+    <StaticExtension Include=".jpg"/>
+    <StaticExtension Include=".js"/>
+    <StaticExtension Include=".css"/>
+    <StaticExtension Include=".eot"/>
+    <StaticExtension Include=".svg"/>
+    <StaticExtension Include=".ttf"/>
+    <StaticExtension Include=".woff"/>
+    <StaticExtension Include=".png"/>
+    <StaticExtension Include=".gif"/>
+    <StaticExtension Include=".pdf"/>
+    <StaticExtension Include=".doc"/>
+    <StaticExtension Include=".flv"/>
+    <StaticExtension Include=".mov"/>
+    <StaticExtension Include=".mp4"/>
+    <StaticExtension Include=".mp3"/>
+  </ItemGroup>
+  <Target Name="Cachify">
+    <CachifierTask 
+      Content="@(Content)" 
+      OutputPath="$(StaticOutputPath)" 
+      StaticExtensions="@(StaticExtension)"
+      ProjectDirectory="$(StaticProjectDirectory)">
+    </CachifierTask>
+    <Message Text="%(Content.HashedFullPath)" />
+  </Target>
+  
+</Project>

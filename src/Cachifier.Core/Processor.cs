@@ -112,7 +112,7 @@ namespace Cachifier
 
             foreach (var resource in resources)
             {
-                var relativePath = this.GetRelativePath(resource.Path, projectDirectory);
+                var relativePath = GetRelativePath(resource.Path, projectDirectory);
                 var fullPath = Path.Combine(projectDirectory, outputPath, relativePath);
                 var directoryName = Path.GetDirectoryName(fullPath);
 
@@ -143,10 +143,10 @@ namespace Cachifier
             {
                 if (this._exclusionsRegex.IsMatch(resource.Path))
                 {
-                    Console.WriteLine("Excluding '{0}'", this.GetRelativePath(resource.Path, projectDirectory));
+                    Console.WriteLine("Excluding '{0}'", GetRelativePath(resource.Path, projectDirectory));
                     continue;
                 }
-                Console.WriteLine("Hashifying '{0}'", this.GetRelativePath(resource.Path, projectDirectory));
+                Console.WriteLine("Hashifying '{0}'", GetRelativePath(resource.Path, projectDirectory));
                 var hash = hashifier.Hashify(resource.Path);
                 var filename = encoder.Encode(hash);
                 var directoryName = Path.GetDirectoryName(resource.Path);
@@ -179,8 +179,8 @@ namespace Cachifier
                     continue;
                 }
 
-                var path = this.GetRelativePath(resource.Path, projectDirectory);
-                var hashedPath = this.GetRelativePath(resource.HashedPath, projectDirectory);
+                var path = GetRelativePath(resource.Path, projectDirectory);
+                var hashedPath = GetRelativePath(resource.HashedPath, projectDirectory);
                 map.Add(path, hashedPath);
             }
 
@@ -243,7 +243,13 @@ namespace Cachifier
             return contentType.ToString();
         }
 
-        private string GetRelativePath(string path, string baseFolder)
+        /// <summary>
+        /// Gets the relative folder
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="baseFolder"></param>
+        /// <returns></returns>
+        public static string GetRelativePath(string path, string baseFolder)
         {
             var pathUri = new Uri(path);
             if (baseFolder[baseFolder.Length - 1] != Path.DirectorySeparatorChar)
