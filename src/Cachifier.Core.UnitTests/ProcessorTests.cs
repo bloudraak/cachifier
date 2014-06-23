@@ -73,9 +73,10 @@ namespace Cachifier
             var expectedHashedStylesheetPath = Path.Combine(this._tempPath,
                 "vgtnhq3mduz5kf356dr0ohej9uxzjgu1eykdcfppzabso6obj.css");
 
-            var target = new Processor();
-            _tempPath = _tempPath;
 
+            File.WriteAllText(Path.Combine(this._tempPath, "index.html"), "<html><head><title>Blank</title></head><body></body></html>");
+
+            var target = new Processor();
             var resources = new[]
             {
                 new Resource
