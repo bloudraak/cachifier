@@ -184,7 +184,38 @@ namespace Cachifier.Build.Tasks
             writer.WriteLine("public static void Start()");
             writer.WriteLine("{");
             writer.Indent++;
-
+            writer.WriteLine("Uri baseUri;");
+            writer.WriteLine("var setting = ConfigurationManager.AppSettings[\"UseContentDeliveryNetwork\"];");
+            writer.WriteLine("bool useContentDeliveryNetwork;");
+            writer.WriteLine("if (bool.TryParse(setting, out useContentDeliveryNetwork))");
+            writer.WriteLine("{");
+            writer.Indent++;
+            writer.WriteLine("setting = ConfigurationManager.AppSettings[\"ContentDeliveryNetworkUri\"];");
+            writer.WriteLine("if (!Uri.TryCreate(setting, UriKind.Absolute, out baseUri))");
+            writer.WriteLine("{");
+            writer.Indent++;
+            writer.WriteLine("// The URI is invalid, so we will not use the CDN.");
+            writer.WriteLine("useContentDeliveryNetwork = false;");
+            writer.Indent--;
+            writer.WriteLine("}");
+            writer.Indent--;
+            writer.WriteLine("}");
+            writer.WriteLine();
+            writer.WriteLine("setting = ConfigurationManager.AppSettings[\"MapStaticResourcesToPublicFolder\"];");
+            writer.WriteLine("bool mapResourcesToPublicFolder;");
+            writer.WriteLine();
+            writer.WriteLine("// we don't really care whether it parsed or not. If the configuration is empty or it consisted ");
+            writer.WriteLine("// of an invalid boolean, we'll simply assume false.");
+            writer.WriteLine("bool.TryParse(setting, out mapResourcesToPublicFolder);");
+            writer.WriteLine();
+            writer.WriteLine("if(!mapResourcesToPublicFolder && !useContentDeliveryNetwork)");
+            writer.WriteLine("{");
+            writer.Indent++;
+            writer.WriteLine("// There is nothing to do, nothing to map.");
+            writer.WriteLine("return;");
+            writer.Indent--;
+            writer.WriteLine("}");
+            writer.WriteLine();
             writer.WriteLine("var mapping = ScriptManager.ScriptResourceMapping;");
 
             foreach (var item in this.Content)
