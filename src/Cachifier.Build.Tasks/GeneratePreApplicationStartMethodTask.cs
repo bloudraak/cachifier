@@ -184,7 +184,7 @@ namespace Cachifier.Build.Tasks
             writer.WriteLine("public static void Start()");
             writer.WriteLine("{");
             writer.Indent++;
-            writer.WriteLine("Uri baseUri;");
+            writer.WriteLine("Uri baseUri = null;");
             writer.WriteLine("var setting = ConfigurationManager.AppSettings[\"UseContentDeliveryNetwork\"];");
             writer.WriteLine("bool useContentDeliveryNetwork;");
             writer.WriteLine("if (bool.TryParse(setting, out useContentDeliveryNetwork))");
@@ -217,7 +217,7 @@ namespace Cachifier.Build.Tasks
             writer.WriteLine("}");
             writer.WriteLine();
             writer.WriteLine("var mapping = ScriptManager.ScriptResourceMapping;");
-
+            writer.WriteLine("ScriptResourceDefinition resourceDefinition;");
             foreach (var item in this.Content)
             {
                 if (!isEmbeddedResource(item))
@@ -230,21 +230,19 @@ namespace Cachifier.Build.Tasks
                 string debugPath = Processor.GetRelativePath(item.ItemSpec, this.ProjectDirectory);
                 debugPath = debugPath.Replace("\\", "/");
                 var relativeUri = relativePath.Replace("\\", "/");
+                writer.WriteLine("resourceDefinition = new ScriptResourceDefinition();");
+                writer.WriteLine("resourceDefinition.CdnPath = new Uri(baseUri, new Uri(\"{0}\", UriKind.Relative)).ToString();", relativeUri);
+                writer.WriteLine("resourceDefinition.CdnDebugPath = new Uri(baseUri, new Uri(\"{0}\", UriKind.Relative)).ToString();", relativeUri);
+                writer.WriteLine("resourceDefinition.CdnSupportsSecureConnection = true;");
+                writer.WriteLine("resourceDefinition.Path = \"~/{0}\";", debugPath);
+                writer.WriteLine("resourceDefinition.DebugPath = \"~/{0}\";", debugPath);
                 writer.WriteLine("mapping.AddDefinition(\"{0}.{1}\",",
                     this.Namespace,
                     relativePath.Replace('\\', '.'));
                 writer.Indent++;
                 writer.WriteLine("typeof(MyClassName).Assembly,");
-                writer.WriteLine("new ScriptResourceDefinition()");
-                writer.WriteLine("{");
-                writer.Indent++;
-                writer.WriteLine("CdnPath = \"http://static.example.com/{0}\",", relativeUri);
-                writer.WriteLine("CdnDebugPath = \"http://static.example.com/{0}\",", relativeUri);
-                writer.WriteLine("CdnSupportsSecureConnection = true,");
-                writer.WriteLine("Path = \"~/{0}\",", debugPath);
-                writer.WriteLine("DebugPath = \"~/{0}\",", debugPath);
-                writer.Indent--;
-                writer.WriteLine("});");
+                writer.WriteLine("resourceDefinition);");
+                writer.WriteLine();
                 writer.Indent--;
             }
 
