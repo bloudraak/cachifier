@@ -49,7 +49,11 @@ namespace Cachifier
             string actual = target.Encode(bytes);
 
             // Assert
-            Assert.AreEqual(expected, actual, "Expected the base36 encoding of {0} to be '{1}'", bytes.ToString(", "),expected);
+            Assert.AreEqual(expected,
+                actual,
+                "Expected the base36 encoding of {0} to be '{1}'",
+                bytes.ToString(", "),
+                expected);
         }
     }
 }

@@ -32,6 +32,18 @@ namespace Cachifier
 
     internal class CommandLineArgs
     {
+        public string OutputPath
+        {
+            get;
+            set;
+        }
+
+        public string ProjectPath
+        {
+            get;
+            set;
+        }
+
         public static CommandLineArgs Parse(string[] args)
         {
             var commandLineArgs = new CommandLineArgs();
@@ -43,22 +55,11 @@ namespace Cachifier
                     break;
 
                 default:
-                    throw new InvalidOperationException(Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName) + " path outputPath");
+                    throw new InvalidOperationException(Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName)
+                                                        + " path outputPath");
             }
-            
+
             return commandLineArgs;
-        }
-
-        public string OutputPath
-        {
-            get;
-            set;
-        }
-
-        public string ProjectPath
-        {
-            get;
-            set;
         }
     }
 
@@ -84,10 +85,10 @@ namespace Cachifier
             {
                 var foregroundColor = Console.ForegroundColor;
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine("Usage:\n\n\t{0} <path>", Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName));
+                Console.Error.WriteLine("Usage:\n\n\t{0} <path>",
+                    Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName));
                 Console.ForegroundColor = foregroundColor;
                 return 2;
-                
             }
             catch (Exception e)
             {

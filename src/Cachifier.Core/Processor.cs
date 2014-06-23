@@ -48,7 +48,7 @@ namespace Cachifier
             "\\obj\\",
             "\\bin\\",
             "_references.js",
-            "modernizr",
+            "modernizr"
         };
 
         private readonly Regex _exclusionsRegex;
@@ -60,7 +60,7 @@ namespace Cachifier
         /// </summary>
         public Processor()
         {
-            _extensions = new[]
+            this._extensions = new[]
             {
                 ".jpg",
                 ".js",
@@ -90,7 +90,9 @@ namespace Cachifier
         /// <param name="projectDirectory">The project directory to which everything is relative to</param>
         /// <param name="resources">The resources</param>
         /// <param name="outputPath">The output path</param>
-        public void Process([NotNull] string projectDirectory, [NotNull] Resource[] resources, string outputPath)
+        public void Process([NotNull] string projectDirectory,
+                            [NotNull] Resource[] resources,
+                            [NotNull] string outputPath)
         {
             if (projectDirectory == null)
             {
@@ -102,26 +104,24 @@ namespace Cachifier
             }
             if (outputPath == null)
             {
-                this.Process(projectDirectory, resources);
+                throw new ArgumentNullException("outputPath");
             }
-            else
+
+            var path = Path.Combine(projectDirectory, outputPath);
+            Directory.CreateDirectory(path);
+
+            foreach (var resource in resources)
             {
-                var path = Path.Combine(projectDirectory, outputPath);
-                Directory.CreateDirectory(path);
+                var relativePath = this.GetRelativePath(resource.Path, projectDirectory);
+                var fullPath = Path.Combine(projectDirectory, outputPath, relativePath);
+                var directoryName = Path.GetDirectoryName(fullPath);
 
-                foreach (var resource in resources)
-                {
-                    var relativePath = this.GetRelativePath(resource.Path, projectDirectory);
-                    var fullPath = Path.Combine(projectDirectory, outputPath, relativePath);
-                    var directoryName = Path.GetDirectoryName(fullPath);
-
-                    Directory.CreateDirectory(directoryName);
-                    File.Copy(resource.Path, fullPath, true);
-                    resource.Path = fullPath;
-                }
-
-                this.Process(path, resources);
+                Directory.CreateDirectory(directoryName);
+                File.Copy(resource.Path, fullPath, true);
+                resource.Path = fullPath;
             }
+
+            this.Process(path, resources);
         }
 
         /// <summary>
@@ -277,13 +277,12 @@ namespace Cachifier
             var files = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
             foreach (var file in files)
             {
-                
-                    if (file.StartsWith(outputPath, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        // skip things in the output path
-                        continue;
-                    }
-                
+                if (file.StartsWith(outputPath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // skip things in the output path
+                    continue;
+                }
+
                 if (file.StartsWith(binPath, StringComparison.InvariantCultureIgnoreCase))
                 {
                     // skip things in the bin path

@@ -58,19 +58,26 @@ namespace Cachifier
             var imageXPath = Path.Combine(this._tempPath, "x", "Image1.jpg");
             Directory.CreateDirectory(Path.GetDirectoryName(imageXPath));
             File.WriteAllBytes(imageXPath, Resources.Image1);
-            var expectedHashedImageXPath = Path.Combine(this._tempPath, outputPath, "x",
+            var expectedHashedImageXPath = Path.Combine(this._tempPath,
+                outputPath,
+                "x",
                 "kna98mczkhzth33v1zzy10in814243cflqzjf7dlezrgmcddg1.jpg");
 
             var imageYPath = Path.Combine(this._tempPath, "y", "Image1.jpg");
             Directory.CreateDirectory(Path.GetDirectoryName(imageYPath));
             File.WriteAllBytes(imageYPath, Resources.Image2);
-            var expectedHashedImageYPath = Path.Combine(this._tempPath, outputPath,"y",
+            var expectedHashedImageYPath = Path.Combine(this._tempPath,
+                outputPath,
+                "y",
                 "zwlj9fjh5thm9l15nykdf1aapr3i9rtq1m40u8ppvyecxrxmw1.jpg");
 
             var stylesheetPath = Path.Combine(this._tempPath, "z", "Styles.css");
             Directory.CreateDirectory(Path.GetDirectoryName(stylesheetPath));
-            File.WriteAllText(stylesheetPath, ".image1 {background-image:url('../x/Image1.jpg');}\n\n.image2 {background-image:url('../y/Image1.jpg');}");
-            var expectedHashedStylesheetPath = Path.Combine(this._tempPath, outputPath, "z",
+            File.WriteAllText(stylesheetPath,
+                ".image1 {background-image:url('../x/Image1.jpg');}\n\n.image2 {background-image:url('../y/Image1.jpg');}");
+            var expectedHashedStylesheetPath = Path.Combine(this._tempPath,
+                outputPath,
+                "z",
                 "valwumxgedp6r7aoas4zwv9o60qljex9orjzc8e1dr5itb9bf1.css");
 
             var target = new Processor();
@@ -121,7 +128,9 @@ namespace Cachifier
                 resources[2].HashedPath,
                 Path.GetFileName(resources[0].HashedPath));
 
-            exists = stylesheetContents.Contains(".image2 {background-image:url('../y/" + Path.GetFileName(resources[1].HashedPath + "');}"));
+            exists =
+                stylesheetContents.Contains(".image2 {background-image:url('../y/"
+                                            + Path.GetFileName(resources[1].HashedPath + "');}"));
             Assert.IsTrue(exists,
                 "Expects the hashed file '{0}' to have a reference to '../y/{1}' rather than '../y/Image1.jpg'",
                 resources[2].HashedPath,

@@ -31,12 +31,12 @@ namespace Cachifier
     using System.Text;
 
     /// <summary>
-    /// Encodes the byte array to base36
+    ///     Encodes the byte array to base36
     /// </summary>
     public class Encoder : IEncoder
     {
         /// <summary>
-        /// Encodes a byte array to base36
+        ///     Encodes a byte array to base36
         /// </summary>
         /// <param name="bytes">The bytes to convert to</param>
         /// <returns>The base36 encoded version of a byte array</returns>
@@ -47,7 +47,7 @@ namespace Cachifier
         }
 
         /// <summary>
-        /// Encodes a byte array to a particular alphabet
+        ///     Encodes a byte array to a particular alphabet
         /// </summary>
         /// <param name="bytes">The bytes to convert</param>
         /// <param name="alphabet">The alphabet to convert too</param>
@@ -58,7 +58,7 @@ namespace Cachifier
         }
 
         /// <summary>
-        /// Encodes a byte array to a particular alphabet
+        ///     Encodes a byte array to a particular alphabet
         /// </summary>
         /// <param name="bytes">The bytes to convert</param>
         /// <param name="alphabet">The alphabet to convert too</param>
