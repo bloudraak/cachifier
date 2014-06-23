@@ -48,5 +48,16 @@ namespace Cachifier
             get;
             set;
         }
+
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>
+        /// A string that represents the current object.
+        /// </returns>
+        public override string ToString()
+        {
+            return string.Format("Path: {0}", this.Path);
+        }
     }
 }

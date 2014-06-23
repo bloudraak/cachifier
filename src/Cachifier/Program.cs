@@ -30,21 +30,57 @@ namespace Cachifier
     using System.Diagnostics;
     using System.IO;
 
+    internal class CommandLineArgs
+    {
+        public static CommandLineArgs Parse(string[] args)
+        {
+            var commandLineArgs = new CommandLineArgs();
+            switch (args.Length)
+            {
+                case 2:
+                    commandLineArgs.OutputPath = args[1];
+                    goto case 1;
+                
+                case 1:
+                    commandLineArgs.ProjectPath = args[0];    
+                break;
+
+                default:
+                    throw new InvalidOperationException("The paramaters are incorrect");
+            }
+            
+            return commandLineArgs;
+        }
+
+        public string OutputPath
+        {
+            get;
+            set;
+        }
+
+        public string ProjectPath
+        {
+            get;
+            set;
+        }
+    }
+
     internal class Program
     {
         private static int Main(string[] args)
         {
             try
             {
-                string path = args[0];
-                if (!Directory.Exists(path))
+                var commandLineArgs = CommandLineArgs.Parse(args);
+
+                if (!Directory.Exists(commandLineArgs.ProjectPath))
                 {
                     Console.Error.WriteLine("The directory '{0}' does not exist");
                     return 1;
                 }
 
                 var processor = new Processor();
-                processor.Process(path);
+                processor.Process(commandLineArgs.ProjectPath, commandLineArgs.OutputPath);
                 return 0;
             }
             catch (IndexOutOfRangeException)

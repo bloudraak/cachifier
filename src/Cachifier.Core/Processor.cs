@@ -30,8 +30,8 @@ namespace Cachifier
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Security.Cryptography;
     using System.Text.RegularExpressions;
+    using Cachifier.Annotations;
     using Microsoft.Win32;
 
     /// <summary>
@@ -39,26 +39,31 @@ namespace Cachifier
     /// </summary>
     public class Processor
     {
-        private readonly string[] exclusions =
+        private readonly string[] _exclusions =
         {
-            "webforms",
-            "msajax",
+            "\\webforms\\",
+            "\\msajax\\",
             "microsoft",
             "jquery",
-            "/obj/",
-            "/bin/",
+            "\\obj\\",
+            "\\bin\\",
+            "_references.js",
+            "modernizr",
         };
+
+        private readonly Regex _exclusionsRegex;
         private readonly Regex _supportedExtensions;
-        private readonly Regex _processRegex;
+        private string[] _extensions;
 
         /// <summary>
         ///     Create a new instance of <see cref="Processor" />
         /// </summary>
         public Processor()
         {
-            string[] extensions = new[]
+            _extensions = new[]
             {
                 ".jpg",
+                ".js",
                 ".css",
                 ".eot",
                 ".svg",
@@ -71,15 +76,56 @@ namespace Cachifier
                 ".flv",
                 ".mov",
                 ".mp4",
-                ".mp3",
+                ".mp3"
             };
-            _supportedExtensions = new Regex(string.Join("|", extensions.Select(Regex.Escape)), RegexOptions.IgnoreCase);
-            _processRegex = new Regex(string.Join("|", this.exclusions.Select(Regex.Escape)), RegexOptions.IgnoreCase);
-
+            this._supportedExtensions = new Regex(string.Join("|", this._extensions.Select(Regex.Escape)),
+                RegexOptions.IgnoreCase);
+            this._exclusionsRegex = new Regex(string.Join("|", this._exclusions.Select(Regex.Escape)),
+                RegexOptions.IgnoreCase);
         }
 
         /// <summary>
         ///     Process files
+        /// </summary>
+        /// <param name="projectDirectory">The project directory to which everything is relative to</param>
+        /// <param name="resources">The resources</param>
+        /// <param name="outputPath">The output path</param>
+        public void Process([NotNull] string projectDirectory, [NotNull] Resource[] resources, string outputPath)
+        {
+            if (projectDirectory == null)
+            {
+                throw new ArgumentNullException("projectDirectory");
+            }
+            if (resources == null)
+            {
+                throw new ArgumentNullException("resources");
+            }
+            if (outputPath == null)
+            {
+                this.Process(projectDirectory, resources);
+            }
+            else
+            {
+                var path = Path.Combine(projectDirectory, outputPath);
+                Directory.CreateDirectory(path);
+
+                foreach (var resource in resources)
+                {
+                    var relativePath = this.GetRelativePath(resource.Path, projectDirectory);
+                    var fullPath = Path.Combine(projectDirectory, outputPath, relativePath);
+                    var directoryName = Path.GetDirectoryName(fullPath);
+
+                    Directory.CreateDirectory(directoryName);
+                    File.Copy(resource.Path, fullPath, true);
+                    resource.Path = fullPath;
+                }
+
+                this.Process(path, resources);
+            }
+        }
+
+        /// <summary>
+        ///     /
         /// </summary>
         /// <param name="projectDirectory"></param>
         /// <param name="resources"></param>
@@ -95,10 +141,12 @@ namespace Cachifier
 
             foreach (var resource in resources)
             {
-                if (_processRegex.IsMatch(resource.Path))
+                if (this._exclusionsRegex.IsMatch(resource.Path))
                 {
+                    Console.WriteLine("Excluding '{0}'", this.GetRelativePath(resource.Path, projectDirectory));
                     continue;
                 }
+                Console.WriteLine("Hashifying '{0}'", this.GetRelativePath(resource.Path, projectDirectory));
                 var hash = hashifier.Hashify(resource.Path);
                 var filename = encoder.Encode(hash);
                 var directoryName = Path.GetDirectoryName(resource.Path);
@@ -115,7 +163,7 @@ namespace Cachifier
                 }
                 using (var source = File.OpenRead(resource.Path))
                 {
-                    using (var destination = File.Open(resource.HashedPath, FileMode.Create))
+                    using (var destination = File.Create(resource.HashedPath))
                     {
                         source.CopyTo(destination, 4096);
                     }
@@ -144,7 +192,8 @@ namespace Cachifier
                     continue;
                 }
 
-                var text = File.ReadAllText(resource.HashedPath);
+                var path = resource.HashedPath;
+                var text = File.ReadAllText(path);
                 foreach (var r in map)
                 {
                     var originalFileName = r.Key.Replace(Path.DirectorySeparatorChar, '/');
@@ -152,7 +201,7 @@ namespace Cachifier
 
                     text = text.Replace(originalFileName, newFileName);
                 }
-                File.WriteAllText(resource.HashedPath, text);
+                File.WriteAllText(path, text);
             }
         }
 
@@ -212,12 +261,38 @@ namespace Cachifier
         ///     Process a folder
         /// </summary>
         /// <param name="path">The path</param>
-        public void Process(string path)
+        /// <param name="outputPath">The output path</param>
+        public void Process(string path, string outputPath)
         {
+            var resources = this.GetResources(path, outputPath);
+            this.Process(path, resources.ToArray(), outputPath);
+        }
+
+        private List<Resource> GetResources(string path, string outputPath)
+        {
+            outputPath = Path.Combine(path, outputPath);
+            var binPath = Path.Combine(path, "bin");
+            var objPath = Path.Combine(path, "obj");
             var resources = new List<Resource>();
             var files = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
             foreach (var file in files)
             {
+                if (file.StartsWith(outputPath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // skip things in the output path
+                    continue;
+                }
+                if (file.StartsWith(binPath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // skip things in the bin path
+                    continue;
+                }
+                if (file.StartsWith(objPath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // skip things in the obj path
+                    continue;
+                }
+
                 // We'll be ignoring any files that isn't static content.
                 string extension = Path.GetExtension(file);
                 if (string.IsNullOrWhiteSpace(extension))
@@ -235,7 +310,7 @@ namespace Cachifier
                 resource.Path = file;
                 resources.Add(resource);
             }
-            this.Process(path, resources.ToArray());
+            return resources;
         }
     }
 }
