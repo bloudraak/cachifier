@@ -53,6 +53,16 @@ namespace Cachifier.Build.Tasks
             set;
         }
 
+        /// <summary>
+        /// Gets the embedded resources in the project
+        /// </summary>
+        [Required]
+        public ITaskItem[] EmbeddedResources
+        {
+            get;
+            set;
+        }
+
         [Required]
         public ITaskItem[] StaticExtensions
         {
@@ -114,12 +124,9 @@ namespace Cachifier.Build.Tasks
 
                 var extensionPattern = string.Join("|", StaticExtensions.Select(s => Regex.Escape(s.ItemSpec)));
                 var extensionRegex = new Regex(extensionPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
                 var outputItems = new List<ITaskItem>();
-
                 IHashifier hashifier = new Hashifier();
                 IEncoder encoder = new Encoder();
-
                 var filesToDelete = new List<string>();
 
                 var outputDirectoryName = Path.Combine(ProjectDirectory, OutputPath);
@@ -131,69 +138,14 @@ namespace Cachifier.Build.Tasks
                 var files = new List<string>();
                 var mapping = new Dictionary<string, string>();
 
+                foreach (var contentFile in EmbeddedResources)
+                {
+                    this.ProcessTaskItem(contentFile, extensionRegex, hashifier, encoder, filesToDelete, mapping, outputDirectoryName, files, outputItems);
+                }
+
                 foreach (var contentFile in Content)
                 {
-                    var path = contentFile.ItemSpec;
-                    var extension = Path.GetExtension(path);
-                    if (extension == null)
-                    {
-                        //this.Log("Skipping '{0}' since it has no extension", path);
-                        continue;
-                    }
-                
-                    if (!extensionRegex.IsMatch(extension))
-                    {
-                        this.Log(MessageImportance.Low, "Skipping '{0}'. It doesn't represent a static file.", path);
-                        continue;
-                    }
-
-                    var fullPath = contentFile.GetMetadata("FullPath");
-                    var hashValue = hashifier.Hashify(fullPath);
-                    var encodedHashValue = encoder.Encode(hashValue);
-                    var relativePath = Processor.GetRelativePath(fullPath, ProjectDirectory);
-                    var hashedFileName = Path.GetFileNameWithoutExtension(fullPath) + "," + encodedHashValue + Path.GetExtension(fullPath);
-                    var outputPath = Path.Combine(ProjectDirectory, OutputPath, relativePath);
-                    outputPath = Path.Combine(Path.GetDirectoryName(outputPath), hashedFileName);
-                    var relativeOutputPath = Processor.GetRelativePath(outputPath, ProjectDirectory);
-                
-                    var directoryName = Path.GetDirectoryName(outputPath);
-                    if (!Directory.Exists(directoryName))
-                    {
-                        this.Log(MessageImportance.Normal, "Creating directory '{0}'...", directoryName);
-                        Directory.CreateDirectory(directoryName);
-                    }
-
-                    if (File.Exists(outputPath))
-                    {
-                        var targetWrittenTime = File.GetLastWriteTimeUtc(outputPath);
-                        var sourceWrittenTime = File.GetLastWriteTimeUtc(fullPath);
-
-                        if (Override || sourceWrittenTime.CompareTo(targetWrittenTime) > 0)
-                        {
-                            // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
-                            this.Log(MessageImportance.Normal, "Copying file from \"{0}\" to \"{1}\".", Processor.GetRelativePath(fullPath, ProjectDirectory), relativeOutputPath);
-                            File.Copy(fullPath, outputPath, true);
-                        }
-                        else
-                        {
-                            //Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
-                            this.Log(MessageImportance.Normal, "Skipping file \"{0}\" because all output files are up-to-date with respect to the input files.", relativeOutputPath);
-                        }
-                    }
-                    else
-                    {
-                        // Deleting file "S:\CachifierSamples\src\Sample.WebApplication3\bin\WebGrease.dll".
-                        // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
-                        this.Log(MessageImportance.Normal, "Copying file from \"{0}\" to \"{1}\".", Processor.GetRelativePath(fullPath, ProjectDirectory), relativeOutputPath);
-                        File.Copy(fullPath, outputPath, true);
-                    }
-
-                    filesToDelete.Remove(outputPath);
-
-                    mapping.Add(relativePath, Processor.GetRelativePath(outputPath, outputDirectoryName));
-                    files.Add(outputPath);
-                    var taskItem = new TaskItem(outputPath);
-                    outputItems.Add(taskItem);
+                    this.ProcessTaskItem(contentFile, extensionRegex, hashifier, encoder, filesToDelete, mapping, outputDirectoryName, files, outputItems);
 
                     // TODO: Replace relative paths
                 }
@@ -202,7 +154,7 @@ namespace Cachifier.Build.Tasks
                 {
                     foreach (var file in filesToDelete)
                     {
-                        Log(MessageImportance.Normal, "Deleting file \"{0}\".", file);
+                        Log(MessageImportance.Normal, "Deleting file \"{0}\" because it is no longer referenced by the project.", file);
                         File.Delete(file);
                     }
                     this.DeleteEmptyDirectories(outputDirectoryName);
@@ -210,10 +162,7 @@ namespace Cachifier.Build.Tasks
 
 
                 OutputItems = outputItems.ToArray();
-                if (files.Count > 0)
-                {
-                    this.Log(MessageImportance.High, "Fixing references between static content");
-                }
+               
             
                 foreach (var file in files)
                 {
@@ -230,7 +179,7 @@ namespace Cachifier.Build.Tasks
 
                     if (skip)
                     {
-                        Log(MessageImportance.Normal, "Skipping file \"{0}\" because its not a text file.", relativePath);
+                        Log(MessageImportance.Normal, "Skipping file \"{0}\" because it is not a static resource.", relativePath);
                         continue;
                     }
 
@@ -245,11 +194,11 @@ namespace Cachifier.Build.Tasks
                     if (!originalText.Equals(text))
                     {
                         File.WriteAllText(file, text);
-                        this.Log(MessageImportance.Normal, "Modified references in \"{0}\" to the hashified paths", relativePath);
+                        Log(MessageImportance.Normal, "Updating file \"{0}\" since references to other static resources has changed.", relativePath);
                     }
                     else
                     {
-                        Log(MessageImportance.Normal, "Skipping file \"{0}\" it has not been modified.", relativePath);
+                        Log(MessageImportance.Normal, "Skipping file \"{0}\" since references to other static resources has not changed.", relativePath);
                     }
                 }
 
@@ -260,6 +209,82 @@ namespace Cachifier.Build.Tasks
                 Log(MessageImportance.High, "Exception: {0}", e);
                 return false;
             }
+        }
+
+        private void ProcessTaskItem(ITaskItem contentFile, Regex extensionRegex, IHashifier hashifier, IEncoder encoder,
+                                     List<string> filesToDelete, Dictionary<string, string> mapping, string outputDirectoryName, List<string> files,
+                                     List<ITaskItem> outputItems)
+        {
+            var path = contentFile.ItemSpec;
+            var extension = Path.GetExtension(path);
+            if (extension == null)
+            {
+                //this.Log("Skipping '{0}' since it has no extension", path);
+                return;
+            }
+
+            if (!extensionRegex.IsMatch(extension))
+            {
+                this.Log(MessageImportance.Low, "Skipping '{0}'. It doesn't represent a static file.", path);
+                return;
+            }
+
+            var fullPath = contentFile.GetMetadata("FullPath");
+            var hashValue = hashifier.Hashify(fullPath);
+            var encodedHashValue = encoder.Encode(hashValue);
+            var relativePath = Processor.GetRelativePath(fullPath, this.ProjectDirectory);
+            var hashedFileName = Path.GetFileNameWithoutExtension(fullPath) + "," + encodedHashValue
+                                 + Path.GetExtension(fullPath);
+            var outputPath = Path.Combine(this.ProjectDirectory, this.OutputPath, relativePath);
+            outputPath = Path.Combine(Path.GetDirectoryName(outputPath), hashedFileName);
+            var relativeOutputPath = Processor.GetRelativePath(outputPath, this.ProjectDirectory);
+
+            var directoryName = Path.GetDirectoryName(outputPath);
+            if (!Directory.Exists(directoryName))
+            {
+                this.Log(MessageImportance.Normal, "Creating directory '{0}'...", directoryName);
+                Directory.CreateDirectory(directoryName);
+            }
+
+            if (File.Exists(outputPath))
+            {
+                var targetWrittenTime = File.GetLastWriteTimeUtc(outputPath);
+                var sourceWrittenTime = File.GetLastWriteTimeUtc(fullPath);
+
+                if (this.Override || sourceWrittenTime.CompareTo(targetWrittenTime) > 0)
+                {
+                    // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
+                    this.Log(MessageImportance.Normal,
+                        "Copying file from \"{0}\" to \"{1}\".",
+                        Processor.GetRelativePath(fullPath, this.ProjectDirectory),
+                        relativeOutputPath);
+                    File.Copy(fullPath, outputPath, true);
+                }
+                else
+                {
+                    //Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
+                    this.Log(MessageImportance.Normal,
+                        "Skipping file \"{0}\" because all output files are up-to-date with respect to the input files.",
+                        relativeOutputPath);
+                }
+            }
+            else
+            {
+                // Deleting file "S:\CachifierSamples\src\Sample.WebApplication3\bin\WebGrease.dll".
+                // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
+                this.Log(MessageImportance.Normal,
+                    "Copying file from \"{0}\" to \"{1}\".",
+                    Processor.GetRelativePath(fullPath, this.ProjectDirectory),
+                    relativeOutputPath);
+                File.Copy(fullPath, outputPath, true);
+            }
+
+            filesToDelete.Remove(outputPath);
+
+            mapping.Add(relativePath, Processor.GetRelativePath(outputPath, outputDirectoryName));
+            files.Add(outputPath);
+            var taskItem = new TaskItem(outputPath);
+            outputItems.Add(taskItem);
         }
 
         private void DeleteEmptyDirectories(string directoryName)

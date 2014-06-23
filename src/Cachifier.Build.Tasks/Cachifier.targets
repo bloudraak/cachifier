@@ -37,7 +37,8 @@
   </ItemGroup>
   <Target Name="Cachify">
     <CachifierTask 
-      Content="@(Content)" 
+      Content="@(Content)"
+      EmbeddedResources="@(EmbeddedResource)" 
       OutputPath="$(StaticOutputPath)" 
       StaticExtensions="@(StaticExtension)"
       ProjectDirectory="$(StaticProjectDirectory)">
