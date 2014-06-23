@@ -48,5 +48,4 @@
   <Target Name="CleanCachify">
     <RemoveDir Directories="$(StaticOutputPath)" />
   </Target>
-          
 </Project>
