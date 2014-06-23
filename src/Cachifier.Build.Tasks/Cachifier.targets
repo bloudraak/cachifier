@@ -11,6 +11,12 @@
       $(BuildDependsOn);
     </BuildDependsOn>
   </PropertyGroup>
+  <PropertyGroup>
+    <CleanDependsOn>
+      CleanCachify;
+      $(CleanDependsOn);
+    </CleanDependsOn>
+  </PropertyGroup>
   <ItemGroup>
     <StaticExtension Include=".jpg" />
     <StaticExtension Include=".jpg"/>
@@ -38,5 +44,8 @@
     </CachifierTask>
     <Message Text="%(Content.HashedFullPath)" />
   </Target>
-  
+  <Target Name="CleanCachify">
+    <RemoveDir Directories="$(StaticOutputPath)" />
+  </Target>
+          
 </Project>

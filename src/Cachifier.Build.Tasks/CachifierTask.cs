@@ -117,8 +117,10 @@ namespace Cachifier.Build.Tasks
             IHashifier hashifier = new Hashifier();
             IEncoder encoder = new Encoder();
 
+            var files = new List<string>();
             var mapping = new Dictionary<string, string>();
-            
+
+            this.Log(MessageImportance.High, "Hasifying paths and copying them to '{0}", OutputPath);
             foreach (var contentFile in Content)
             {
                 var path = contentFile.ItemSpec;
@@ -147,7 +149,7 @@ namespace Cachifier.Build.Tasks
                 var directoryName = Path.GetDirectoryName(outputPath);
                 if (!Directory.Exists(directoryName))
                 {
-                    Log("Creating directory '{0}'...", directoryName);
+                    this.Log(MessageImportance.Normal, "Creating directory '{0}'...", directoryName);
                     Directory.CreateDirectory(directoryName);
                 }
 
@@ -159,23 +161,25 @@ namespace Cachifier.Build.Tasks
                     if (Override || sourceWrittenTime.CompareTo(targetWrittenTime) > 0)
                     {
                         // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
-                        Log("Replacing '{0}' since its been modified...", relativeOutputPath);
+                        this.Log(MessageImportance.Normal, "Replacing '{0}' since its been modified...", relativeOutputPath);
                         File.Copy(fullPath, outputPath, true);
                     }
                     else
                     {
                         //Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
-                        Log("Skipping '{0}'...", relativeOutputPath);
+                        this.Log(MessageImportance.Normal, "Skipping '{0}'...", relativeOutputPath);
                     }
                 }
                 else
                 {
                     // Deleting file "S:\CachifierSamples\src\Sample.WebApplication3\bin\WebGrease.dll".
                     // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
-                    Log("Creating '{0}'...", relativeOutputPath);
+                    this.Log(MessageImportance.Normal, "Creating '{0}'...", relativeOutputPath);
                     File.Copy(fullPath, outputPath, true);
                 }
 
+                mapping.Add(relativePath, Processor.GetRelativePath(outputPath, Path.Combine(ProjectDirectory, OutputPath)));
+                files.Add(outputPath);
                 var taskItem = new TaskItem(outputPath);
                 outputItems.Add(taskItem);
 
@@ -183,13 +187,52 @@ namespace Cachifier.Build.Tasks
             }
             OutputItems = outputItems.ToArray();
 
+            this.Log(MessageImportance.High, "Fixing references between static content");
+            foreach (var file in files)
+            {
+                var relativePath = Processor.GetRelativePath(file, ProjectDirectory);
+
+                bool skip = true;
+                switch (Path.GetExtension(file))
+                {
+                    case ".css":
+                    case ".js":
+                        skip = false;
+                        break;
+                }
+
+                if (skip)
+                {
+                    Log(MessageImportance.Normal, "Skipping file \"{0}\" because its not a text file.", relativePath);
+                    continue;
+                }
+
+                var originalText = File.ReadAllText(file);
+                var text = File.ReadAllText(file);
+                foreach (var pair in mapping)
+                {
+                    var oldValue = pair.Key.Replace(Path.DirectorySeparatorChar, '/');
+                    var newValue = pair.Value.Replace(Path.DirectorySeparatorChar, '/');
+                    text = text.Replace(oldValue, newValue);
+                }
+                if (!originalText.Equals(text))
+                {
+                    File.WriteAllText(file, text);
+                    this.Log(MessageImportance.Normal, "Modified references in \"{0}\" to the hashified paths", relativePath);
+                }
+                else
+                {
+                    Log(MessageImportance.Normal, "Skipping file \"{0}\" it has not been modified.", relativePath);
+                }
+            }
+
             return true;
         }
 
-        private void Log(string format, params object[] args)
+        private void Log(MessageImportance importance, string format, params object[] args)
         {
             var message = string.Format(format, args);
-            var eventArgs = new BuildMessageEventArgs(message, string.Empty, "CachifierProcessingContent", MessageImportance.Normal);
+            var eventArgs = new BuildMessageEventArgs(message, string.Empty, "CachifierProcessingContent", importance);
             this.BuildEngine.LogMessageEvent(eventArgs);
         }
 
