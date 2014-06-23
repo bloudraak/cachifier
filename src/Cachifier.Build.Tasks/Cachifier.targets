@@ -4,9 +4,12 @@
   <PropertyGroup>
     <StaticOutputPath Condition="'$(StaticOutputPath)'==''">public</StaticOutputPath>
     <StaticProjectDirectory Condition="'$(StaticProjectDirectory)' == ''">$(MSBuildProjectDirectory)</StaticProjectDirectory>
+    <StaticResourcesManifest Condition="'$(StaticResourcesManifest)' == ''">$(MSBuildProjectDirectory)\StaticResourceManifest.xml</StaticResourcesManifest>
     <ScriptManagerPreApplicationStartClass Condition="'$(ScriptManagerPreApplicationStartClass)' == ''">ScriptManagerRegistrar</ScriptManagerPreApplicationStartClass>
     <ScriptManagerPreApplicationStartPath Condition="'$(ScriptManagerPreApplicationStartPath)' == ''">$(MSBuildProjectDirectory)\$(ScriptManagerPreApplicationStartClass).cs</ScriptManagerPreApplicationStartPath>
     <ScriptManagerPreApplicationStartRootNamespace Condition="'$(ScriptManagerPreApplicationStartRootNamespace)' == ''">$(RootNamespace)</ScriptManagerPreApplicationStartRootNamespace>
+    <AssemblyName Condition="'$(AssemblyName)' == ''"></AssemblyName>
+    <RootNamespace Condition="'$(RootNamespace)' == ''"></RootNamespace>
   </PropertyGroup>
   <PropertyGroup>
     <BuildDependsOn>
@@ -44,6 +47,9 @@
       EmbeddedResources="@(EmbeddedResource)" 
       OutputPath="$(StaticOutputPath)" 
       StaticExtensions="@(StaticExtension)"
+      ManifestPath="$(StaticResourcesManifest)"
+      RootNamespace="$(RootNamespace)"
+      AssemblyName="$(AssemblyName)"
       ProjectDirectory="$(StaticProjectDirectory)">
       <Output TaskParameter="OutputItems" ItemName="StaticContent" />
     </CachifierTask>

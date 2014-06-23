@@ -27,13 +27,13 @@
 namespace Cachifier.Build.Tasks
 {
     using System;
-    using System.CodeDom.Compiler;
     using System.Collections.Generic;
+    using System.Collections.Specialized;
     using System.ComponentModel;
     using System.IO;
     using System.Linq;
-    using System.Text;
     using System.Text.RegularExpressions;
+    using System.Xml.Linq;
     using Cachifier.Build.Tasks.Annotations;
     using Microsoft.Build.Framework;
     using Microsoft.Build.Utilities;
@@ -110,6 +110,25 @@ namespace Cachifier.Build.Tasks
             set;
         }
 
+        [PublicAPI]
+        public string ManifestPath
+        {
+            get;
+            set;
+        }
+
+        public string RootNamespace
+        {
+            get;
+            set;
+        }
+
+        public string AssemblyName
+        {
+            get;
+            set;
+        }
+
         [DefaultValue(false)]
         [PublicAPI]
         public bool Override
@@ -138,6 +157,7 @@ namespace Cachifier.Build.Tasks
                     this.BuildEngine.LogMessageEvent(args);
                 }
 
+                var resources = new XElement("resources");
                 this._extensionPattern = string.Join("|", this.StaticExtensions.Select(s => Regex.Escape(s.ItemSpec)));
                 this._extensionRegex = new Regex(this._extensionPattern,
                     RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -151,12 +171,12 @@ namespace Cachifier.Build.Tasks
 
                 foreach (var contentFile in this.EmbeddedResources)
                 {
-                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, true);
+                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, true, resources);
                 }
 
                 foreach (var contentFile in this.Content)
                 {
-                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, false);
+                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, false, resources);
                 }
 
                 if (Directory.Exists(outputDirectoryName))
@@ -208,6 +228,15 @@ namespace Cachifier.Build.Tasks
                     }
                 }
 
+                
+                var manifest =
+                    new XDocument(resources);
+
+                if (ManifestPath != null)
+                {
+                    manifest.Save(this.ManifestPath);
+                }
+
                 return true;
             }
             catch (Exception e)
@@ -245,13 +274,7 @@ namespace Cachifier.Build.Tasks
             return skip;
         }
 
-        private void ProcessTaskItem(
-            ITaskItem contentFile,
-            ICollection<string> filesToDelete,
-            IDictionary<string, string> mapping,
-            string outputDirectoryName,
-            ICollection<string> files,
-            ICollection<ITaskItem> outputItems, bool IsEmbeddedResource)
+        private void ProcessTaskItem(ITaskItem contentFile, ICollection<string> filesToDelete, IDictionary<string, string> mapping, string outputDirectoryName, ICollection<string> files, ICollection<ITaskItem> outputItems, bool IsEmbeddedResource, XElement resources)
         {
             var path = contentFile.ItemSpec;
             var extension = Path.GetExtension(path);
@@ -271,10 +294,14 @@ namespace Cachifier.Build.Tasks
                 return;
             }
 
+            var resource = new XElement("resource");
+            resources.Add(resource);
+
             var fullPath = contentFile.GetMetadata("FullPath");
             var hashValue = this._hashifier.Hashify(fullPath);
             var encodedHashValue = this._encoder.Encode(hashValue);
             var relativePath = Processor.GetRelativePath(fullPath, this.ProjectDirectory);
+            
             var hashedFileName = Path.GetFileNameWithoutExtension(fullPath) + "," + encodedHashValue
                                  + Path.GetExtension(fullPath);
             var outputPath = Path.Combine(this.ProjectDirectory, this.OutputPath, relativePath);
@@ -329,6 +356,18 @@ namespace Cachifier.Build.Tasks
             taskItem.SetMetadata("OriginalRelativePath", relativePath);
             taskItem.SetMetadata("IsEmbeddedResource", IsEmbeddedResource.ToString());
             outputItems.Add(taskItem);
+
+            if (IsEmbeddedResource && !string.IsNullOrWhiteSpace(AssemblyName))
+            {
+                resource.Add(new XAttribute("name", RootNamespace + "." + relativePath.Replace(Path.DirectorySeparatorChar, '.')));
+                resource.Add(new XElement("assembly", AssemblyName));
+            }
+            else
+            {
+                resource.Add(new XAttribute("name", relativePath.Replace(Path.DirectorySeparatorChar, '/')));
+            }
+            resource.Add(new XElement("cdn-relative-path", Processor.GetRelativePath(outputPath, outputDirectoryName).Replace(Path.DirectorySeparatorChar, '/')));
+            resource.Add(new XElement("relative-path", Processor.GetRelativePath(outputPath, this.ProjectDirectory).Replace(Path.DirectorySeparatorChar, '/')));
         }
 
         private void DeleteEmptyDirectories(string directoryName)
