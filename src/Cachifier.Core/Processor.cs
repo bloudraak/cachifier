@@ -26,6 +26,8 @@
 
 namespace Cachifier
 {
+    using System;
+    using System.Collections.Generic;
     using System.IO;
     using Microsoft.Win32;
 
@@ -35,11 +37,25 @@ namespace Cachifier
     public class Processor
     {
         /// <summary>
+        /// Defines the project directory
+        /// </summary>
+        public string ProjectDirectory
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Process files
         /// </summary>
         /// <param name="resources"></param>
         public void Process(Resource[] resources)
         {
+            if (string.IsNullOrWhiteSpace(ProjectDirectory))
+            {
+                throw new InvalidOperationException("The project directory is required");
+            }
+
             IHashifier hashifier = new Hashifier();
             IEncoder encoder = new Encoder();
 
@@ -47,7 +63,9 @@ namespace Cachifier
             {
                 var hash = hashifier.Hashify(resource.Path);
                 var filename = encoder.Encode(hash);
-                resource.HashedPath = Path.Combine(Path.GetDirectoryName(resource.Path), filename + Path.GetExtension(resource.Path));
+                var directoryName = Path.GetDirectoryName(resource.Path);
+                var extension = Path.GetExtension(resource.Path);
+                resource.HashedPath = Path.Combine(directoryName, filename + extension);
             }
 
             foreach (var resource in resources)
@@ -61,6 +79,14 @@ namespace Cachifier
                 }
             }
 
+            var map = new Dictionary<string, string>();
+            foreach (var resource in resources)
+            {
+                var path = GetRelativePath(resource.Path, ProjectDirectory);
+                var hashedPath = GetRelativePath(resource.HashedPath, ProjectDirectory);
+                map.Add(path, hashedPath);
+            }
+
             foreach (var resource in resources)
             {
                 if (!IsTextResource(resource))
@@ -69,9 +95,12 @@ namespace Cachifier
                 }
 
                 var text = File.ReadAllText(resource.HashedPath);
-                foreach (var r in resources)
+                foreach (var r in map)
                 {
-                    text = text.Replace(Path.GetFileName(r.Path), Path.GetFileName(r.HashedPath));
+                    var originalFileName = r.Key.Replace(Path.DirectorySeparatorChar, '/');
+                    var newFileName = r.Value.Replace(Path.DirectorySeparatorChar, '/');
+
+                    text = text.Replace(originalFileName, newFileName);
                 }
                 File.WriteAllText(resource.HashedPath, text);
             }
@@ -115,6 +144,17 @@ namespace Cachifier
             }
 
             return contentType.ToString();
+        }
+
+        string GetRelativePath(string path, string baseFolder)
+        {
+            var pathUri = new Uri(path);
+            if (baseFolder[baseFolder.Length-1] != Path.DirectorySeparatorChar)
+            {
+                baseFolder += Path.DirectorySeparatorChar;
+            }
+            var folderUri = new Uri(baseFolder);
+            return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
         }
     }
 }
