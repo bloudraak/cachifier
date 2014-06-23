@@ -129,7 +129,7 @@ namespace Cachifier
         /// </summary>
         /// <param name="projectDirectory"></param>
         /// <param name="resources"></param>
-        public void Process(string projectDirectory, Resource[] resources)
+        private void Process(string projectDirectory, Resource[] resources)
         {
             if (string.IsNullOrWhiteSpace(projectDirectory))
             {
@@ -277,11 +277,13 @@ namespace Cachifier
             var files = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
             foreach (var file in files)
             {
-                if (file.StartsWith(outputPath, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    // skip things in the output path
-                    continue;
-                }
+                
+                    if (file.StartsWith(outputPath, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        // skip things in the output path
+                        continue;
+                    }
+                
                 if (file.StartsWith(binPath, StringComparison.InvariantCultureIgnoreCase))
                 {
                     // skip things in the bin path

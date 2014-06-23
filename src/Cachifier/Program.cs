@@ -39,14 +39,11 @@ namespace Cachifier
             {
                 case 2:
                     commandLineArgs.OutputPath = args[1];
-                    goto case 1;
-                
-                case 1:
-                    commandLineArgs.ProjectPath = args[0];    
-                break;
+                    commandLineArgs.ProjectPath = args[0];
+                    break;
 
                 default:
-                    throw new InvalidOperationException("The paramaters are incorrect");
+                    throw new InvalidOperationException(Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName) + " path outputPath");
             }
             
             return commandLineArgs;
