@@ -153,7 +153,7 @@ namespace Cachifier.Build.Tasks
                     var args = new BuildMessageEventArgs(message,
                         string.Empty,
                         "CachifierNoContent",
-                        MessageImportance.Normal);
+                        MessageImportance.Low);
                     this.BuildEngine.LogMessageEvent(args);
                 }
 
@@ -168,7 +168,7 @@ namespace Cachifier.Build.Tasks
                 var filesToDelete = GetFilesToDelete(outputDirectoryName);
                 var files = new HashSet<string>();
                 var mapping = new Dictionary<string, string>();
-
+                
                 foreach (var contentFile in this.EmbeddedResources)
                 {
                     this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, true, resources);
@@ -183,7 +183,7 @@ namespace Cachifier.Build.Tasks
                 {
                     foreach (var file in filesToDelete)
                     {
-                        this.Log(MessageImportance.Normal,
+                        this.Log(MessageImportance.Low,
                             "Deleting file \"{0}\" because it is no longer referenced by the project.",
                             file);
                         File.Delete(file);
@@ -199,7 +199,7 @@ namespace Cachifier.Build.Tasks
 
                     if (IsBinary(file))
                     {
-                        this.Log(MessageImportance.Normal,
+                        this.Log(MessageImportance.Low,
                             "Skipping file \"{0}\" because it is not a static resource.",
                             relativePath);
                         continue;
@@ -216,13 +216,13 @@ namespace Cachifier.Build.Tasks
                     if (!originalText.Equals(text))
                     {
                         File.WriteAllText(file, text);
-                        this.Log(MessageImportance.Normal,
+                        this.Log(MessageImportance.Low,
                             "Updating file \"{0}\" since references to other static resources has changed.",
                             relativePath);
                     }
                     else
                     {
-                        this.Log(MessageImportance.Normal,
+                        this.Log(MessageImportance.Low,
                             "Skipping file \"{0}\" since references to other static resources has not changed.",
                             relativePath);
                     }
@@ -280,7 +280,7 @@ namespace Cachifier.Build.Tasks
             var extension = Path.GetExtension(path);
             if (extension == null)
             {
-                this.Log(MessageImportance.Normal,
+                this.Log(MessageImportance.Low,
                     "Skipping '{0}' because it doesn't represent a static resource.",
                     path);
                 return;
@@ -288,7 +288,7 @@ namespace Cachifier.Build.Tasks
 
             if (!this._extensionRegex.IsMatch(extension))
             {
-                this.Log(MessageImportance.Normal,
+                this.Log(MessageImportance.Low,
                     "Skipping '{0}' because it doesn't represent a static resource.",
                     path);
                 return;
@@ -311,7 +311,7 @@ namespace Cachifier.Build.Tasks
             var directoryName = Path.GetDirectoryName(outputPath);
             if (!Directory.Exists(directoryName))
             {
-                this.Log(MessageImportance.Normal, "Creating directory '{0}'...", directoryName);
+                this.Log(MessageImportance.Low, "Creating directory '{0}'...", directoryName);
                 Directory.CreateDirectory(directoryName);
             }
 
@@ -323,7 +323,7 @@ namespace Cachifier.Build.Tasks
                 if (this.Override || sourceWrittenTime.CompareTo(targetWrittenTime) > 0)
                 {
                     // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
-                    this.Log(MessageImportance.Normal,
+                    this.Log(MessageImportance.Low,
                         "Copying file from \"{0}\" to \"{1}\".",
                         Processor.GetRelativePath(fullPath, this.ProjectDirectory),
                         relativeOutputPath);
@@ -332,7 +332,7 @@ namespace Cachifier.Build.Tasks
                 else
                 {
                     //Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
-                    this.Log(MessageImportance.Normal,
+                    this.Log(MessageImportance.Low,
                         "Skipping file \"{0}\" because all output files are up-to-date with respect to the input files.",
                         relativeOutputPath);
                 }
@@ -341,7 +341,7 @@ namespace Cachifier.Build.Tasks
             {
                 // Deleting file "S:\CachifierSamples\src\Sample.WebApplication3\bin\WebGrease.dll".
                 // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
-                this.Log(MessageImportance.Normal,
+                this.Log(MessageImportance.Low,
                     "Copying file from \"{0}\" to \"{1}\".",
                     Processor.GetRelativePath(fullPath, this.ProjectDirectory),
                     relativeOutputPath);
@@ -379,7 +379,7 @@ namespace Cachifier.Build.Tasks
 
             if (!Directory.EnumerateFileSystemEntries(directoryName).Any())
             {
-                this.Log(MessageImportance.Normal, "Deleting directory \"{0}\" because it is empty.", directoryName);
+                this.Log(MessageImportance.Low, "Deleting directory \"{0}\" because it is empty.", directoryName);
                 Directory.Delete(directoryName);
             }
         }
