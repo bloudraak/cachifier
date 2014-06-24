@@ -15,8 +15,8 @@
     <tags>AspNet Mvc AspNetMvc AspNetWebPages</tags>
   </metadata>
   <files>
-    <file src="Cachifier.targets" target="build/net40" />
-    <file src="bin\$configuration$\*.dll" target="build/net40" />
-    <file src="bin\$configuration$\*.pdb" target="build/net40" />
+    <file src="Cachifier.targets" target="build" />
+    <file src="bin\$configuration$\*.dll" target="build" />
+    <file src="bin\$configuration$\*.pdb" target="build" />
   </files>
 </package>
