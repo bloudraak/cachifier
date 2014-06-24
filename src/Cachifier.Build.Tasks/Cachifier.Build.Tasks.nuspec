@@ -16,7 +16,7 @@
   </metadata>
   <files>
     <file src="Cachifier.targets" target="build/net40" />
-    <file src="install.ps1" target="tools" />
-    <file src="uninstall.ps1" target="tools" />
+    <file src="bin\$configuration$\*.dll" target="build/net40" />
+    <file src="bin\$configuration$\*.pdb" target="build/net40" />
   </files>
 </package>

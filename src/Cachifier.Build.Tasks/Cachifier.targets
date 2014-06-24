@@ -1,5 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" >
-  <UsingTask AssemblyFile="S:\cachifier\src\Cachifier.Build.Tasks\bin\Debug\Cachifier.Build.Tasks.dll" TaskName="CachifierTask" />
+  <UsingTask AssemblyFile="$(MSBuildThisFileDirectory)\Cachifier.Build.Tasks.dll" TaskName="CachifierTask" Condition="Exists('$(MSBuildThisFileDirectory)\Cachifier.Build.Tasks.dll')"  />
+  <UsingTask AssemblyFile="$(MSBuildThisFileDirectory)\bin\Debug\Cachifier.Build.Tasks.dll" TaskName="CachifierTask" Condition="Exists('$(MSBuildThisFileDirectory)\bin\Debug\Cachifier.Build.Tasks.dll')"  />
+  <UsingTask AssemblyFile="$(MSBuildThisFileDirectory)\bin\Release\Cachifier.Build.Tasks.dll" TaskName="CachifierTask" Condition="Exists('$(MSBuildThisFileDirectory)\bin\Release\Cachifier.Build.Tasks.dll')"  />
   <PropertyGroup>
     <StaticOutputPath Condition="'$(StaticOutputPath)'==''">public</StaticOutputPath>
     <StaticProjectDirectory Condition="'$(StaticProjectDirectory)' == ''">$(MSBuildProjectDirectory)</StaticProjectDirectory>
