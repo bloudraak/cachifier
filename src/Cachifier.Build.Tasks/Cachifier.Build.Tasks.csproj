@@ -43,7 +43,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Cachifier.Build.Tasks.nuspec" />
     <None Include="Cachifier.targets" />
+    <None Include="install.ps1" />
+    <None Include="uninstall.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cachifier.Core\Cachifier.Core.csproj">

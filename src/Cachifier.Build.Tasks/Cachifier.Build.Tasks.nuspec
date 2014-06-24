@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>Cachifier</title>
+    <authors>Werner Strydom</authors>
+    <owners>Werner Strydom</owners>
+    <licenseUrl>https://github.com/bloudraak/cachifier/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/bloudraak/cachifier</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Hashifies filenames so browser and intermeditary caches are busted.</description>
+    <releaseNotes>Initial Release</releaseNotes>
+    <copyright>Copyright 2014 Werner Strydom</copyright>
+    <tags>AspNet Mvc AspNetMvc AspNetWebPages</tags>
+  </metadata>
+  <files>
+    <file src="Cachifier.targets" target="build/net40" />
+    <file src="install.ps1" target="tools" />
+    <file src="uninstall.ps1" target="tools" />
+  </files>
+</package>
