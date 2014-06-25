@@ -71,7 +71,7 @@
     </ItemGroup>
     <ItemGroup>
       <FilesForPackagingFromProject Include="@(HashifiedStaticContent)">
-        <DestinationRelativePath>%(HashifiedStaticContent.RecursiveDir)%(HashifiedStaticContent.Filename)%(HashifiedStaticContent.Extension)</DestinationRelativePath>
+        <DestinationRelativePath>$(StaticOutputPath)\%(HashifiedStaticContent.RecursiveDir)%(HashifiedStaticContent.Filename)%(HashifiedStaticContent.Extension)</DestinationRelativePath>
       </FilesForPackagingFromProject>
     </ItemGroup>
   </Target>
