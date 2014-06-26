@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ExtensionTasksPath Condition="'$(ExtensionTasksPath)' == ''">$(MSBuildThisFileDirectory)..\packages\MSBuild.Extension.Pack.1.4.0\tools\net40\</ExtensionTasksPath>
+  </PropertyGroup>
+  <Import Project="$(ExtensionTasksPath)MSBuild.ExtensionPack.tasks"/>
+  <PropertyGroup>
+    <AssemblyMajorVersion Condition="'$(AssemblyMajorVersion)' == ''">1</AssemblyMajorVersion>
+    <AssemblyMinorVersion Condition="'$(AssemblyMinorVersion)' == ''">0</AssemblyMinorVersion>
+    <AssemblyBuildNumber Condition="'$(AssemblyBuildNumber)' == ''">0</AssemblyBuildNumber>
+    <AssemblyRevision Condition="'$(AssemblyRevision)' == ''">0</AssemblyRevision>
+    <AssemblyBuildNumberType Condition="'$(AssemblyBuildNumber)' == ''">DateString</AssemblyBuildNumberType>
+    <AssemblyBuildNumberFormat Condition="'$(AssemblyBuildNumber)' == ''">MMdd</AssemblyBuildNumberFormat>
+    <AssemblyBuildNumberFormat Condition="'$(AssemblyBuildNumber)' != ''">DirectSet</AssemblyBuildNumberFormat>
+    <AssemblyRevisionType Condition="'$(AssemblyRevision)' == ''">NoIncrement</AssemblyRevisionType>
+    <AssemblyRevisionReset Condition="'$(AssemblyRevision)' == ''"></AssemblyRevisionReset>
+    <AssemblyRevisionFormat Condition="'$(AssemblyRevision)' == ''"></AssemblyRevisionFormat>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyFileMajorVersion Condition="'$(AssemblyFileMajorVersion)' == ''">1</AssemblyFileMajorVersion>
+    <AssemblyFileMinorVersion Condition="'$(AssemblyFileMinorVersion)' == ''">0</AssemblyFileMinorVersion>
+    <AssemblyFileBuildNumber Condition="'$(AssemblyFileBuildNumber)' == ''">0</AssemblyFileBuildNumber>
+    <AssemblyFileRevision Condition="'$(AssemblyFileRevision)' == ''">0</AssemblyFileRevision>
+    <AssemblyFileBuildNumberType Condition="'$(AssemblyFileBuildNumber)' == ''">DateString</AssemblyFileBuildNumberType>
+    <AssemblyFileBuildNumberFormat Condition="'$(AssemblyFileBuildNumber)' == ''">MMdd</AssemblyFileBuildNumberFormat>
+    <AssemblyFileBuildNumberFormat Condition="'$(AssemblyFileBuildNumber)' == ''">DirectSet</AssemblyFileBuildNumberFormat>
+    <AssemblyFileRevisionType Condition="'$(AssemblyFileRevision)' == ''">NoIncrement</AssemblyFileRevisionType>
+    <AssemblyFileRevisionReset Condition="'$(AssemblyFileRevision)' == ''"></AssemblyFileRevisionReset>
+    <AssemblyFileRevisionFormat Condition="'$(AssemblyFileRevision)' == ''"></AssemblyFileRevisionFormat>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyComVisible Condition="'$(AssemblyComVisible)' == ''"></AssemblyComVisible>
+    <AssemblyGuid Condition="'$(AssemblyGuid)' == ''"></AssemblyGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyCompany Condition="'$(AssemblyCompany)' == ''"></AssemblyCompany>
+    <AssemblyConfiguration Condition="'$(AssemblyConfiguration)' == ''"></AssemblyConfiguration>
+    <AssemblyCopyright Condition="'$(AssemblyCopyright)' == ''"></AssemblyCopyright>
+    <AssemblyCulture Condition="'$(AssemblyCulture)' == ''"></AssemblyCulture>
+    <AssemblyDescription Condition="'$(AssemblyDescription)' == ''"></AssemblyDescription>
+    <AssemblyProduct Condition="'$(AssemblyProduct)' == ''"></AssemblyProduct>
+    <AssemblyTitle Condition="'$(AssemblyTitle)' == ''"></AssemblyTitle>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyIncludeSigningInformation Condition="'$(AssemblyIncludeSigningInformation)' == ''">false</AssemblyIncludeSigningInformation>
+    <AssemblyDelaySign Condition="'$(AssemblyDelaySign)' == ''">false</AssemblyDelaySign>
+    <AssemblyKeyFile Condition="'$(AssemblyKeyFile)' == ''"></AssemblyKeyFile>
+    <AssemblyKeyName Condition="'$(AssemblyKeyName)' == ''"></AssemblyKeyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyInfoFiles Include="$(MSBuildThisFileDirectory)..\src\**\AssemblyInfo.*"/>
+  </ItemGroup>
+  <PropertyGroup>
+    <CoreCompileDependsOn>
+      $(CoreCompileDependsOn);
+      UpdateAssemblyInfoFiles
+    </CoreCompileDependsOn>
+  </PropertyGroup>
+  <Target Name="UpdateAssemblyInfoFiles">
+    
+    <AssemblyInfo AssemblyInfoFiles="@(AssemblyInfoFiles)"
+                  AssemblyMajorVersion="$(AssemblyMajorVersion)"
+                  AssemblyMinorVersion="$(AssemblyMinorVersion)"
+                  AssemblyBuildNumber="$(AssemblyBuildNumber)"
+                  AssemblyRevision="$(AssemblyRevision)"
+                  AssemblyBuildNumberType="$(AssemblyBuildNumberType)"
+                  AssemblyBuildNumberFormat="$(AssemblyBuildNumberFormat)"
+                  AssemblyRevisionType="$(AssemblyRevisionType)"
+                  AssemblyRevisionReset="$(AssemblyRevisionReset)"
+                  AssemblyRevisionFormat="$(AssemblyRevisionFormat)"
+                  AssemblyFileMajorVersion="$(AssemblyFileMajorVersion)"
+                  AssemblyFileMinorVersion="$(AssemblyFileMinorVersion)"
+                  AssemblyFileBuildNumber="$(AssemblyFileBuildNumber)"
+                  AssemblyFileRevision="$(AssemblyFileRevision)"
+                  AssemblyFileBuildNumberType="$(AssemblyFileBuildNumberType)"
+                  AssemblyFileBuildNumberFormat="$(AssemblyFileBuildNumberFormat)"
+                  AssemblyFileRevisionType="$(AssemblyFileRevisionType)"
+                  AssemblyFileRevisionReset="$(AssemblyFileRevisionReset)"
+                  AssemblyFileRevisionFormat="$(AssemblyFileRevisionFormat)"
+                  ComVisible="$(AssemblyComVisible)"
+                  Guid="$(AssemblyGuid)"
+                  AssemblyCompany="$(AssemblyCompany)"
+                  AssemblyConfiguration="$(AssemblyConfiguration)"
+                  AssemblyCopyright="$(AssemblyCopyright)"
+                  AssemblyCulture="$(AssemblyCulture)"
+                  AssemblyDescription="$(AssemblyDescription)"
+                  AssemblyProduct="$(AssemblyProduct)"
+                  AssemblyTitle="$(AssemblyTitle)"
+                  AssemblyIncludeSigningInformation="$(AssemblyIncludeSigningInformation)"
+                  AssemblyDelaySign="$(AssemblyDelaySign)"
+                  AssemblyKeyFile="$(AssemblyKeyFile)"
+                  AssemblyKeyName="$(AssemblyKeyName)">
+      <Output TaskParameter="MaxAssemblyVersion" PropertyName="MaxAssemblyVersion"/>
+      <Output TaskParameter="MaxAssemblyFileVersion" PropertyName="MaxAssemblyFileVersion"/>
+    </AssemblyInfo>
+  </Target>
+</Project>
