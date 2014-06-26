@@ -52,7 +52,7 @@
     <NuGetSpecification Include="$(MSBuildThisFileDirectory)..\**\*.nuspec" />
   </ItemGroup>
   <ItemGroup>
-    <NuGetPackage Include="$(MSBuildThisFileDirectory)..\**\*.nupkg" />
+    <NuGetPackage Include="$(ArtifactsDirectory)**\*.nupkg" />
   </ItemGroup>
   <Target Name="Package">
     <MakeDir Directories="$(ArtifactsDirectory)" />
