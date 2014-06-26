@@ -58,7 +58,7 @@
   </Target>
   <Target Name="Publish">
     <ItemGroup>
-      <NuGetPackage Include="$(ArtifactsDirectory)**\*.nupkg" />
+      <NuGetPackage Include="$(ArtifactsDirectory)\**\*.nupkg" />
     </ItemGroup>
     <Exec Command="$(NuGetCommand) push &quot;%(NuGetPackage.FullPath)&quot; -ApiKey &quot;$(NugetOrgApiKey)&quot;" LogStandardErrorAsError="true" Condition="'$(NugetOrgApiKey)' != ''"/>
   </Target>
