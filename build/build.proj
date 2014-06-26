@@ -51,10 +51,14 @@
   <ItemGroup>
     <NuGetSpecification Include="$(MSBuildThisFileDirectory)..\**\*.nuspec" />
   </ItemGroup>
+  <ItemGroup>
+    <NuGetPackage Include="$(MSBuildThisFileDirectory)..\**\*.nupkg" />
+  </ItemGroup>
   <Target Name="Package">
     <MakeDir Directories="$(ArtifactsDirectory)" />
     <Exec Command="$(NuGetCommand) pack &quot;%(NuGetSpecification.FullPath)&quot; -Prop Version=$(Version) -Prop Configuration=$(Configuration) -OutputDirectory $(ArtifactsDirectory)" LogStandardErrorAsError="true" />
   </Target>
   <Target Name="Publish">
+    <Exec Command="$(NuGetCommand) push &quot;%(NuGetPackage.FullPath)&quot; -ApiKey &quot;$(NugetOrgApiKey)&quot;" LogStandardErrorAsError="true" Condition="'$(NugetOrgApiKey)' != ''"/>
   </Target>
 </Project>
