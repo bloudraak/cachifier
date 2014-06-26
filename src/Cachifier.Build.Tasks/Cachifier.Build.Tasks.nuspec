@@ -13,8 +13,10 @@
     <releaseNotes>Initial Release</releaseNotes>
     <copyright>Copyright 2014 Werner Strydom</copyright>
     <tags>AspNet Mvc AspNetMvc AspNetWebPages</tags>
+    <language>en-US</language>
   </metadata>
   <files>
+    <file src="..\..\LICENSE"/>
     <file src="Cachifier.Build.Tasks.targets" target="build\net45" />
     <file src="bin\$configuration$\*.dll" target="build\net45" />
     <file src="bin\$configuration$\*.pdb" target="build\net45" />
