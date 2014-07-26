@@ -26,36 +26,57 @@
 
 namespace Cachifier
 {
+    using System.Diagnostics;
     using System.IO;
-    using Cachifier.Annotations;
+    using System.Security.Cryptography;
+    using Cachifier.Build.Tasks.Annotations;
 
     /// <summary>
-    ///     Represents a hashifier
+    ///     Represents a class that generates a hash
     /// </summary>
-    public interface IHashifier
+    public sealed class Hashifier : IHashifier
     {
         /// <summary>
         ///     Generates a SHA256 hash from a byte array
         /// </summary>
         /// <param name="bytes"></param>
-        /// <returns>A byte array</returns>
+        /// <returns></returns>
         [PublicAPI]
-        byte[] Hashify(byte[] bytes);
+        public byte[] Hashify(byte[] bytes)
+        {
+            using (var algorithm = HashAlgorithm.Create("SHA256"))
+            {
+                Debug.Assert(algorithm != null, "algorithm != null");
+                return algorithm.ComputeHash(bytes);
+            }
+        }
 
         /// <summary>
-        ///     Generates a SHA256 hash from a stream
+        ///     Generates a SHA256 hash from a byte array
         /// </summary>
         /// <param name="stream"></param>
-        /// <returns>A byte array</returns>
+        /// <returns></returns>
         [PublicAPI]
-        byte[] Hashify(Stream stream);
+        public byte[] Hashify(Stream stream)
+        {
+            using (var algorithm = HashAlgorithm.Create("SHA256"))
+            {
+                Debug.Assert(algorithm != null, "algorithm != null");
+                return algorithm.ComputeHash(stream);
+            }
+        }
 
         /// <summary>
         ///     Generates a SHA256 hash from a path
         /// </summary>
         /// <param name="path">The path of a file to generated a hash from</param>
         /// <returns>A byte array</returns>
-        [PublicAPI]
-        byte[] Hashify(string path);
+        public byte[] Hashify(string path)
+        {
+            using (var stream = File.OpenRead(path))
+            {
+                return this.Hashify(stream);
+            }
+        }
     }
 }

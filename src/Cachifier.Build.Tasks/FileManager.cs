@@ -24,36 +24,31 @@
 
 #endregion
 
-namespace Cachifier
+namespace Cachifier.Build.Tasks
 {
     using System;
-    using NUnit.Framework;
+    using System.IO;
 
-    [TestFixture]
-    public sealed class EncoderTests
+    public class FileManager
     {
-        [Test]
-        public void Encode()
+        /// <summary>
+        /// Gets the relative folder
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="baseFolder"></param>
+        /// <returns></returns>
+        public static string GetRelativePath(string path, string baseFolder)
         {
-            // Arrange
-            var target = new Encoder();
-            var expected = "pml241";
-            var bytes = new Byte[]
+            var pathUri = new Uri(path);
+            if (baseFolder[baseFolder.Length - 1] != Path.DirectorySeparatorChar)
             {
-                0x01,
-                0x02,
-                0x03,
-                0x04
-            };
-            // Act
-            string actual = target.Encode(bytes);
-
-            // Assert
-            Assert.AreEqual(expected,
-                actual,
-                "Expected the base36 encoding of {0} to be '{1}'",
-                bytes.ToString(", "),
-                expected);
+                baseFolder += Path.DirectorySeparatorChar;
+            }
+            var folderUri = new Uri(baseFolder);
+            return
+                Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri)
+                    .ToString()
+                    .Replace('/', Path.DirectorySeparatorChar));
         }
     }
 }

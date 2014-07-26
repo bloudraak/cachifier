@@ -26,57 +26,36 @@
 
 namespace Cachifier
 {
-    using System.Diagnostics;
     using System.IO;
-    using System.Security.Cryptography;
-    using Cachifier.Annotations;
+    using Cachifier.Build.Tasks.Annotations;
 
     /// <summary>
-    ///     Represents a class that generates a hash
+    ///     Represents a hashifier
     /// </summary>
-    public sealed class Hashifier : IHashifier
+    public interface IHashifier
     {
         /// <summary>
         ///     Generates a SHA256 hash from a byte array
         /// </summary>
         /// <param name="bytes"></param>
-        /// <returns></returns>
+        /// <returns>A byte array</returns>
         [PublicAPI]
-        public byte[] Hashify(byte[] bytes)
-        {
-            using (var algorithm = HashAlgorithm.Create("SHA256"))
-            {
-                Debug.Assert(algorithm != null, "algorithm != null");
-                return algorithm.ComputeHash(bytes);
-            }
-        }
+        byte[] Hashify(byte[] bytes);
 
         /// <summary>
-        ///     Generates a SHA256 hash from a byte array
+        ///     Generates a SHA256 hash from a stream
         /// </summary>
         /// <param name="stream"></param>
-        /// <returns></returns>
+        /// <returns>A byte array</returns>
         [PublicAPI]
-        public byte[] Hashify(Stream stream)
-        {
-            using (var algorithm = HashAlgorithm.Create("SHA256"))
-            {
-                Debug.Assert(algorithm != null, "algorithm != null");
-                return algorithm.ComputeHash(stream);
-            }
-        }
+        byte[] Hashify(Stream stream);
 
         /// <summary>
         ///     Generates a SHA256 hash from a path
         /// </summary>
         /// <param name="path">The path of a file to generated a hash from</param>
         /// <returns>A byte array</returns>
-        public byte[] Hashify(string path)
-        {
-            using (var stream = File.OpenRead(path))
-            {
-                return this.Hashify(stream);
-            }
-        }
+        [PublicAPI]
+        byte[] Hashify(string path);
     }
 }

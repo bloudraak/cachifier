@@ -2,6 +2,7 @@
 {
     using System.Collections.Generic;
     using System.Runtime.Serialization;
+    using Cachifier.Build.Tasks.Annotations;
 
     /// <summary>
     /// Represents a collection of resources
@@ -28,7 +29,7 @@
         /// Initializes a new instance of the <see cref="T:System.Collections.Generic.HashSet`1"/> class that uses the default equality comparer for the set type, contains elements copied from the specified collection, and has sufficient capacity to accommodate the number of elements copied.
         /// </summary>
         /// <param name="collection">The collection whose elements are copied to the new set.</param><exception cref="T:System.ArgumentNullException"><paramref name="collection"/> is null.</exception>
-        public ResourceCollection([Cachifier.Annotations.NotNull] IEnumerable<Resource> collection)
+        public ResourceCollection([NotNull] IEnumerable<Resource> collection)
             : base(collection)
         {
         }
@@ -37,7 +38,7 @@
         /// Initializes a new instance of the <see cref="T:System.Collections.Generic.HashSet`1"/> class that uses the specified equality comparer for the set type, contains elements copied from the specified collection, and has sufficient capacity to accommodate the number of elements copied.
         /// </summary>
         /// <param name="collection">The collection whose elements are copied to the new set.</param><param name="comparer">The <see cref="T:System.Collections.Generic.IEqualityComparer`1"/> implementation to use when comparing values in the set, or null to use the default <see cref="T:System.Collections.Generic.EqualityComparer`1"/> implementation for the set type.</param><exception cref="T:System.ArgumentNullException"><paramref name="collection"/> is null.</exception>
-        public ResourceCollection([Cachifier.Annotations.NotNull] IEnumerable<Resource> collection, IEqualityComparer<Resource> comparer)
+        public ResourceCollection([NotNull] IEnumerable<Resource> collection, IEqualityComparer<Resource> comparer)
             : base(collection, comparer)
         {
         }

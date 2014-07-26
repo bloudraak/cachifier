@@ -26,7 +26,7 @@
 
 namespace Cachifier
 {
-    using Cachifier.Annotations;
+    using Cachifier.Build.Tasks.Annotations;
 
     /// <summary>
     ///     Represents an encoder

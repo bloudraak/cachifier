@@ -220,7 +220,7 @@ namespace Cachifier.Build.Tasks
 
                 foreach (var file in files)
                 {
-                    var relativePath = Processor.GetRelativePath(file, this.ProjectDirectory);
+                    var relativePath = FileManager.GetRelativePath(file, this.ProjectDirectory);
 
                     if (IsBinary(file))
                     {
@@ -460,13 +460,13 @@ namespace Cachifier.Build.Tasks
             var fullPath = contentFile.GetMetadata("FullPath");
             var hashValue = this._hashifier.Hashify(fullPath);
             var encodedHashValue = this._encoder.Encode(hashValue);
-            var relativePath = Processor.GetRelativePath(fullPath, this.ProjectDirectory);
+            var relativePath = FileManager.GetRelativePath(fullPath, this.ProjectDirectory);
             
             var hashedFileName = Path.GetFileNameWithoutExtension(fullPath) + "," + encodedHashValue
                                  + Path.GetExtension(fullPath);
             var outputPath = Path.Combine(this.ProjectDirectory, this.OutputPath, relativePath);
             outputPath = Path.Combine(Path.GetDirectoryName(outputPath), hashedFileName);
-            var relativeOutputPath = Processor.GetRelativePath(outputPath, this.ProjectDirectory);
+            var relativeOutputPath = FileManager.GetRelativePath(outputPath, this.ProjectDirectory);
 
             var directoryName = Path.GetDirectoryName(outputPath);
             if (!Directory.Exists(directoryName))
@@ -485,7 +485,7 @@ namespace Cachifier.Build.Tasks
                     // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
                     this.Log(MessageImportance.Low,
                         "Copying file from \"{0}\" to \"{1}\".",
-                        Processor.GetRelativePath(fullPath, this.ProjectDirectory),
+                        FileManager.GetRelativePath(fullPath, this.ProjectDirectory),
                         relativeOutputPath);
                     File.Copy(fullPath, outputPath, true);
                 }
@@ -503,14 +503,14 @@ namespace Cachifier.Build.Tasks
                 // Copying file from "obj\Debug\Sample.WebApplication3.dll" to "bin\Sample.WebApplication3.dll".
                 this.Log(MessageImportance.Low,
                     "Copying file from \"{0}\" to \"{1}\".",
-                    Processor.GetRelativePath(fullPath, this.ProjectDirectory),
+                    FileManager.GetRelativePath(fullPath, this.ProjectDirectory),
                     relativeOutputPath);
                 File.Copy(fullPath, outputPath, true);
             }
 
             filesToDelete.Remove(outputPath);
 
-            mapping.Add(relativePath, Processor.GetRelativePath(outputPath, outputDirectoryName));
+            mapping.Add(relativePath, FileManager.GetRelativePath(outputPath, outputDirectoryName));
             files.Add(outputPath);
 
             var taskItem = new TaskItem(outputPath);
@@ -540,8 +540,8 @@ namespace Cachifier.Build.Tasks
             var hashifiedPath = Path.Combine(Path.GetDirectoryName(relativePath), hashedFileName);
             resource.RelativeHashifiedPath = hashifiedPath;
 
-            resourceElement.Add(new XElement("cdn-relative-path", Processor.GetRelativePath(outputPath, outputDirectoryName).Replace(Path.DirectorySeparatorChar, '/')));
-            resourceElement.Add(new XElement("relative-path", Processor.GetRelativePath(outputPath, this.ProjectDirectory).Replace(Path.DirectorySeparatorChar, '/')));
+            resourceElement.Add(new XElement("cdn-relative-path", FileManager.GetRelativePath(outputPath, outputDirectoryName).Replace(Path.DirectorySeparatorChar, '/')));
+            resourceElement.Add(new XElement("relative-path", FileManager.GetRelativePath(outputPath, this.ProjectDirectory).Replace(Path.DirectorySeparatorChar, '/')));
         }
 
         private void DeleteEmptyDirectories(string directoryName)
