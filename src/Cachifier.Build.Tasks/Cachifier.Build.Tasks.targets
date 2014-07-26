@@ -8,6 +8,9 @@
     <StaticResourcesManifest Condition="'$(StaticResourcesManifest)' == ''">$(MSBuildProjectDirectory)\StaticResourceManifest.xml</StaticResourcesManifest>
     <AssemblyName Condition="'$(AssemblyName)' == ''"></AssemblyName>
     <RootNamespace Condition="'$(RootNamespace)' == ''"></RootNamespace>
+    <StaticMappingSourcePath Condition="'$(StaticMappingSourcePath)' == ''">$(MSBuildProjectDirectory)\MapScriptResources.cs</StaticMappingSourcePath>
+    <CdnBaseUri Condition="'$(CdnBaseUri)' == ''">http://example.com/$(MSBuildProjectName)</CdnBaseUri>
+    <ForceLowercase Condition="'$(ForceLowercase)' == ''">true</ForceLowercase>
   </PropertyGroup>
   <!--======================================================================================================================-->
   <!-- Content we consider to be static                                                                                     -->
@@ -54,6 +57,9 @@
       ManifestPath="$(StaticResourcesManifest)"
       RootNamespace="$(RootNamespace)"
       AssemblyName="$(AssemblyName)"
+      CdnBaseUri="$(CdnBaseUri)"
+      StaticMappingSourcePath="$(StaticMappingSourcePath)"
+      ForceLowercase="$(ForceLowercase)"
       ProjectDirectory="$(StaticProjectDirectory)">
       <Output TaskParameter="OutputItems" ItemName="StaticContent" />
     </CachifierTask>

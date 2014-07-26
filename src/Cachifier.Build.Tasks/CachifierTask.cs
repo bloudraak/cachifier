@@ -27,8 +27,8 @@
 namespace Cachifier.Build.Tasks
 {
     using System;
+    using System.CodeDom.Compiler;
     using System.Collections.Generic;
-    using System.Collections.Specialized;
     using System.ComponentModel;
     using System.IO;
     using System.Linq;
@@ -117,6 +117,13 @@ namespace Cachifier.Build.Tasks
             set;
         }
 
+        [PublicAPI]
+        public string StaticMappingSourcePath
+        {
+            get;
+            set;
+        }
+
         public string RootNamespace
         {
             get;
@@ -124,6 +131,18 @@ namespace Cachifier.Build.Tasks
         }
 
         public string AssemblyName
+        {
+            get;
+            set;
+        }
+
+        public string CdnBaseUri
+        {
+            get;
+            set;
+        }
+
+        public bool ForceLowercase
         {
             get;
             set;
@@ -157,7 +176,7 @@ namespace Cachifier.Build.Tasks
                     this.BuildEngine.LogMessageEvent(args);
                 }
 
-                var resources = new XElement("resources");
+                var resourcesElement = new XElement("resources");
                 this._extensionPattern = string.Join("|", this.StaticExtensions.Select(s => Regex.Escape(s.ItemSpec)));
                 this._extensionRegex = new Regex(this._extensionPattern,
                     RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -168,15 +187,17 @@ namespace Cachifier.Build.Tasks
                 var filesToDelete = GetFilesToDelete(outputDirectoryName);
                 var files = new HashSet<string>();
                 var mapping = new Dictionary<string, string>();
+               
+                var resources = new ResourceCollection();
                 
                 foreach (var contentFile in this.EmbeddedResources)
                 {
-                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, true, resources);
+                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, true, resourcesElement, resources);
                 }
 
                 foreach (var contentFile in this.Content)
                 {
-                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, false, resources);
+                    this.ProcessTaskItem(contentFile, filesToDelete, mapping, outputDirectoryName, files, outputItems, false, resourcesElement, resources);
                 }
 
                 if (Directory.Exists(outputDirectoryName))
@@ -190,8 +211,12 @@ namespace Cachifier.Build.Tasks
                     }
                     this.DeleteEmptyDirectories(outputDirectoryName);
                 }
-
                 this.OutputItems = outputItems.ToArray();
+
+                foreach (var resource in resources)
+                {
+                    this.Log(MessageImportance.Normal, "Static Resource: {0}", resource);
+                }
 
                 foreach (var file in files)
                 {
@@ -228,13 +253,19 @@ namespace Cachifier.Build.Tasks
                     }
                 }
 
-                
-                var manifest =
-                    new XDocument(resources);
-
                 if (ManifestPath != null)
                 {
+                    var manifest = new XDocument(resourcesElement);
                     manifest.Save(this.ManifestPath);
+                }
+
+                if (!string.IsNullOrWhiteSpace(this.StaticMappingSourcePath))
+                {
+                    this.GenerateSourceMappingSource(resources);
+                }
+                else
+                {
+                    this.Log(MessageImportance.Low, "Skipping the generation of ScriptResourceMapping in code, since no the property StaticMappingSourcePath was not set");
                 }
 
                 return true;
@@ -244,6 +275,135 @@ namespace Cachifier.Build.Tasks
                 this.Log(MessageImportance.High, "Exception: {0}", e);
                 return false;
             }
+        }
+
+        private void GenerateSourceMappingSource(ResourceCollection resources)
+        {
+            using (var streamWriter = new StreamWriter(this.StaticMappingSourcePath))
+            {
+                using (var writer = new IndentedTextWriter(streamWriter))
+                {
+                    writer.WriteLine("using System;");
+                    writer.WriteLine("using System.IO;");
+                    writer.WriteLine("using System.Configuration;");
+                    writer.WriteLine("using System.Web;");
+                    writer.WriteLine("using System.Web.UI;");
+                    writer.WriteLine("using System.Web.Configuration;");
+                    writer.WriteLine("using {0};", this.RootNamespace);
+                    writer.WriteLine();
+                    writer.WriteLine("[assembly: PreApplicationStartMethod(typeof (MapScriptResources), \"Start\")]");
+                    writer.WriteLine();
+                    writer.WriteLine("namespace {0}", this.RootNamespace);
+                    writer.WriteLine("{");
+                    writer.Indent++;
+                    writer.WriteLine();
+                    writer.WriteLine("public static partial class MapScriptResources");
+                    writer.WriteLine("{");
+                    writer.WriteLine();
+                    writer.Indent++;
+                    writer.WriteLine("public static void Start()");
+                    writer.WriteLine("{");
+                    writer.Indent++;
+                    writer.WriteLine("ScriptResourceDefinition definition = null;");
+                    writer.WriteLine("var assembly = typeof(MapScriptResources).Assembly;");
+                    foreach (var resource in resources)
+                    {
+                        var assemblyName = "assembly";
+                        if (!resource.IsEmbedded)
+                        {
+                            assemblyName = "null";
+                        }
+
+                        writer.WriteLine();
+                        writer.WriteLine("//");
+                        writer.WriteLine("// Name: {0}", resource.Name);
+                        writer.WriteLine("// Assembly: {0}", resource.Assembly);
+                        writer.WriteLine("// IsEmbedded: {0}", resource.IsEmbedded);
+                        writer.WriteLine("// RelativeHashifiedPath: {0}", resource.RelativeHashifiedPath);
+                        writer.WriteLine("// RelativePath: {0}", resource.RelativePath);
+                        writer.WriteLine("//");
+
+                        writer.WriteLine("definition = ScriptManager.ScriptResourceMapping.GetDefinition(\"{0}\", {1});", resource.Name, assemblyName);
+                        writer.WriteLine("if(definition == null)");
+                        writer.WriteLine("{");
+                        writer.Indent++;
+                        writer.WriteLine("definition = new ScriptResourceDefinition();");
+                        
+                        if (!resource.IsEmbedded)
+                        {
+                            var relativeUri = resource.RelativePath.Replace('\\', '/');
+                            if (this.ForceLowercase)
+                            {
+                                relativeUri = relativeUri.ToLowerInvariant();
+                            }
+                            writer.WriteLine("if(IsDebuggingEnabled)");
+                            writer.WriteLine("{");
+                            writer.Indent++;
+                            writer.WriteLine("definition.Path = \"~/{0}\";", relativeUri);
+                            writer.WriteLine("definition.DebugPath = \"~/{0}\";", relativeUri);
+                            writer.Indent--;
+                            writer.WriteLine("}");
+                            writer.WriteLine("else");
+                            writer.WriteLine("{");
+                            writer.Indent++;
+                            relativeUri = resource.RelativeHashifiedPath.Replace('\\', '/');
+                            if (this.ForceLowercase)
+                            {
+                                relativeUri = relativeUri.ToLowerInvariant();
+                            }
+                            writer.WriteLine("definition.Path = \"~/{1}/{0}\";", relativeUri, this.OutputPath);
+                            writer.WriteLine("definition.DebugPath = \"~/{1}/{0}\";", relativeUri, this.OutputPath);
+                            writer.Indent--;
+                            writer.WriteLine("}");
+                        }
+                        else
+                        {
+                            writer.WriteLine("definition.ResourceAssembly = assembly;");
+                            writer.WriteLine("definition.ResourceName = \"{0}\";", resource.Name);
+                        }
+                        var uri = this.GetCdnUri(resource);
+                        writer.WriteLine("definition.CdnPath = \"{0}\";", uri);
+                        writer.WriteLine("definition.CdnDebugPath = \"{0}\";", uri);
+                        writer.WriteLine("definition.CdnSupportsSecureConnection = true;");
+                        writer.WriteLine("ScriptManager.ScriptResourceMapping.AddDefinition(\"{0}\", {1}, definition);", resource.Name, assemblyName);
+                        writer.WriteLine();
+                        
+                        writer.Indent--;
+                        writer.WriteLine("}");
+                    }
+                    writer.Indent--;
+                    writer.WriteLine("}");
+                    writer.WriteLine();
+                    writer.WriteLine("private static bool IsDebuggingEnabled");
+                    writer.WriteLine("{");
+                    writer.Indent++;
+                    writer.WriteLine("get");
+                    writer.WriteLine("{");
+                    writer.Indent++;
+                    writer.WriteLine("var compilationSection = (CompilationSection) ConfigurationManager.GetSection(\"system.web/compilation\");");
+                    writer.WriteLine("return compilationSection.Debug;");
+                    writer.Indent--;
+                    writer.WriteLine("}");
+                    writer.Indent--;
+                    writer.WriteLine("}");
+                    writer.Indent--;
+                    writer.WriteLine("}");
+                    writer.Indent--;
+                    writer.WriteLine("}");
+                }
+            }
+        }
+
+        private Uri GetCdnUri(Resource resource)
+        {
+            var relativeUri = resource.RelativeHashifiedPath.Replace('\\', '/');
+            if (ForceLowercase)
+            {
+                relativeUri = relativeUri.ToLowerInvariant();
+            }
+            var baseUri = new Uri(this.CdnBaseUri, UriKind.Absolute);
+            var uri = new Uri(baseUri, relativeUri);
+            return uri;
         }
 
         private static HashSet<string> GetFilesToDelete(string outputDirectoryName)
@@ -274,7 +434,7 @@ namespace Cachifier.Build.Tasks
             return skip;
         }
 
-        private void ProcessTaskItem(ITaskItem contentFile, ICollection<string> filesToDelete, IDictionary<string, string> mapping, string outputDirectoryName, ICollection<string> files, ICollection<ITaskItem> outputItems, bool IsEmbeddedResource, XElement resources)
+        private void ProcessTaskItem(ITaskItem contentFile, ICollection<string> filesToDelete, IDictionary<string, string> mapping, string outputDirectoryName, ICollection<string> files, ICollection<ITaskItem> outputItems, bool IsEmbeddedResource, XElement resources, ResourceCollection resourceCollection)
         {
             var path = contentFile.ItemSpec;
             var extension = Path.GetExtension(path);
@@ -294,8 +454,8 @@ namespace Cachifier.Build.Tasks
                 return;
             }
 
-            var resource = new XElement("resource");
-            resources.Add(resource);
+            var resourceElement = new XElement("resource");
+            resources.Add(resourceElement);
 
             var fullPath = contentFile.GetMetadata("FullPath");
             var hashValue = this._hashifier.Hashify(fullPath);
@@ -352,22 +512,36 @@ namespace Cachifier.Build.Tasks
 
             mapping.Add(relativePath, Processor.GetRelativePath(outputPath, outputDirectoryName));
             files.Add(outputPath);
+
             var taskItem = new TaskItem(outputPath);
             taskItem.SetMetadata("OriginalRelativePath", relativePath);
             taskItem.SetMetadata("IsEmbeddedResource", IsEmbeddedResource.ToString());
             outputItems.Add(taskItem);
 
+            var resource = new Resource();
+            resourceCollection.Add(resource);
+
             if (IsEmbeddedResource && !string.IsNullOrWhiteSpace(AssemblyName))
             {
-                resource.Add(new XAttribute("name", RootNamespace + "." + relativePath.Replace(Path.DirectorySeparatorChar, '.')));
-                resource.Add(new XElement("assembly", AssemblyName));
+                var name = RootNamespace + "." + relativePath.Replace(Path.DirectorySeparatorChar, '.');
+                resourceElement.Add(new XAttribute("name", name));
+                resourceElement.Add(new XElement("assembly", AssemblyName));
+
+                resource.Name = name;
+                resource.Assembly = AssemblyName;
             }
             else
             {
-                resource.Add(new XAttribute("name", relativePath.Replace(Path.DirectorySeparatorChar, '/')));
+                var name = relativePath.Replace(Path.DirectorySeparatorChar, '/');
+                resourceElement.Add(new XAttribute("name", name));
+                resource.Name = Path.GetFileName(name);
             }
-            resource.Add(new XElement("cdn-relative-path", Processor.GetRelativePath(outputPath, outputDirectoryName).Replace(Path.DirectorySeparatorChar, '/')));
-            resource.Add(new XElement("relative-path", Processor.GetRelativePath(outputPath, this.ProjectDirectory).Replace(Path.DirectorySeparatorChar, '/')));
+            resource.RelativePath = relativePath;
+            var hashifiedPath = Path.Combine(Path.GetDirectoryName(relativePath), hashedFileName);
+            resource.RelativeHashifiedPath = hashifiedPath;
+
+            resourceElement.Add(new XElement("cdn-relative-path", Processor.GetRelativePath(outputPath, outputDirectoryName).Replace(Path.DirectorySeparatorChar, '/')));
+            resourceElement.Add(new XElement("relative-path", Processor.GetRelativePath(outputPath, this.ProjectDirectory).Replace(Path.DirectorySeparatorChar, '/')));
         }
 
         private void DeleteEmptyDirectories(string directoryName)

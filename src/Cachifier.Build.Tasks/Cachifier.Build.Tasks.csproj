@@ -42,6 +42,8 @@
     <Compile Include="CachifierTask.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resource.cs" />
+    <Compile Include="ResourceCollection.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Cachifier.Build.Tasks.nuspec" />
