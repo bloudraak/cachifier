@@ -11,3 +11,7 @@ Given an folder with static resources, Cachifier will
   * References within the folder will be renamed
 
 This was written in C# and Visual Studio 2013. 
+
+
+
+
