@@ -93,8 +93,8 @@ namespace Cachifier
             {
                 BigInteger remainder;
                 dividend = BigInteger.DivRem(dividend, divisor, out remainder);
-                var index = Math.Abs(((int) remainder));
-                builder.Append(alphabet[index]);
+                var index = BigInteger.Abs(remainder);
+                builder.Append(alphabet[(int)index]);
             }
             return builder.ToString();
         }

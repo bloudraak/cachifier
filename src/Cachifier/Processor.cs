@@ -43,6 +43,7 @@ namespace Cachifier
         private readonly string _assemblyName;
         private readonly string _cdnBaseUri;
         private readonly string[] _content;
+        private readonly string[] _exclusions;
         private readonly string[] _embeddedResources;
         private readonly ICollection<string> _extensions;
         private readonly bool _forceLowercase;
@@ -51,19 +52,11 @@ namespace Cachifier
         private readonly string _rootNamespace;
         private readonly string _staticMappingSourcePath;
 
-        public Processor(string[] embeddedResources,
-                         string[] content,
-                         string projectDirectory,
-                         string assemblyName,
-                         string rootNamespace,
-                         IEnumerable<string> extensions,
-                         string staticMappingSourcePath,
-                         bool forceLowercase,
-                         string outputPath2,
-                         string cdnBaseUri)
+        public Processor(string[] embeddedResources, string[] content, string[] exclusions, string projectDirectory, string assemblyName, string rootNamespace, IEnumerable<string> extensions, string staticMappingSourcePath, bool forceLowercase, string outputPath2, string cdnBaseUri)
         {
             this._embeddedResources = embeddedResources;
             this._content = content;
+            this._exclusions = exclusions;
             this._projectDirectory = projectDirectory;
             this._assemblyName = assemblyName;
             this._rootNamespace = rootNamespace;
@@ -170,7 +163,7 @@ namespace Cachifier
             // Collect Resources
             //
             Logger.Log(MessageImportance.High, "Collecting static resources from \"{0}\"", _projectDirectory);
-            var resourceFilter = new ResourceFilter(this.Extensions);
+            var resourceFilter = new ResourceFilter(this.Extensions, _exclusions);
             var collector = new ResourceCollector(this.ProjectDirectory, resourceFilter);
 
             resources.AddRange(collector.CollectEmbeddedResources(this.AssemblyName,

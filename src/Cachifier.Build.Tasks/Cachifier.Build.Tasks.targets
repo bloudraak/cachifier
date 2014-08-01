@@ -33,6 +33,9 @@
     <StaticExtension Include=".mp4"/>
     <StaticExtension Include=".mp3"/>
   </ItemGroup>
+  <ItemGroup>
+    <StaticExclusion Include="$(MSBuildProjectDirectory)\**\*jquery*.js" />
+  </ItemGroup>
   <!--======================================================================================================================-->
   <!-- Collect all the embedded and static content, rename them and copy them to the static output folder                   -->
   <!--======================================================================================================================-->
@@ -52,6 +55,7 @@
     <CachifierTask 
       Content="@(Content)"
       EmbeddedResources="@(EmbeddedResource)" 
+      Exclusions="@(StaticExclusion)"
       OutputPath="$(StaticOutputPath)" 
       StaticExtensions="@(StaticExtension)"
       ManifestPath="$(StaticResourcesManifest)"

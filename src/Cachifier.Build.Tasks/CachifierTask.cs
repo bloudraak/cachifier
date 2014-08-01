@@ -43,9 +43,8 @@ namespace Cachifier.Build.Tasks
     {
         private ITaskItem[] _content;
         private ITaskItem[] _embeddedResources;
-        private IEncoder _encoder;
-        private IHashifier _hashifier;
         private ITaskItem[] _staticExtensions;
+        private ITaskItem[] _exclusions;
 
         /// <summary>
         ///     Gets the content files
@@ -80,6 +79,20 @@ namespace Cachifier.Build.Tasks
             set
             {
                 this._embeddedResources = value;
+            }
+        }
+
+        [PublicAPI]
+        [NotNull]
+        public ITaskItem[] Exclusions
+        {
+            get
+            {
+                return this._exclusions ?? new ITaskItem[0];
+            }
+            set
+            {
+                this._exclusions = value;
             }
         }
 
@@ -194,9 +207,11 @@ namespace Cachifier.Build.Tasks
 
                 var embeddedResources = this.SelectFullPath(this.EmbeddedResources).ToArray();
                 var content = this.SelectFullPath(this.Content).ToArray();
+                var exclusions = this.SelectFullPath(this.Exclusions).ToArray(); 
 
                 var processor = new Processor(embeddedResources,
                     content,
+                    exclusions,
                     this.ProjectDirectory,
                     this.AssemblyName,
                     this.RootNamespace,
