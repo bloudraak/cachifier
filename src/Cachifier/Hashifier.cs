@@ -26,7 +26,9 @@
 
 namespace Cachifier
 {
+    using System;
     using System.Diagnostics;
+    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Security.Cryptography;
     using Cachifier.Build.Tasks.Annotations;
@@ -42,11 +44,18 @@ namespace Cachifier
         /// <param name="bytes"></param>
         /// <returns></returns>
         [PublicAPI]
-        public byte[] Hashify(byte[] bytes)
+        public byte[] Hashify([NotNull] byte[] bytes)
         {
+            Contract.Ensures(Contract.Result<byte[]>() != null);
+
+            if (bytes == null)
+            {
+                throw new ArgumentNullException("bytes");
+            }
+
             using (var algorithm = HashAlgorithm.Create("SHA256"))
             {
-                Debug.Assert(algorithm != null, "algorithm != null");
+                Contract.Assert(algorithm != null, "algorithm != null");
                 return algorithm.ComputeHash(bytes);
             }
         }
@@ -57,8 +66,14 @@ namespace Cachifier
         /// <param name="stream"></param>
         /// <returns></returns>
         [PublicAPI]
-        public byte[] Hashify(Stream stream)
+        public byte[] Hashify([NotNull] Stream stream)
         {
+            Contract.Ensures(Contract.Result<byte[]>() != null);
+
+            if (stream == null)
+            {
+                throw new ArgumentNullException("stream");
+            }
             using (var algorithm = HashAlgorithm.Create("SHA256"))
             {
                 Debug.Assert(algorithm != null, "algorithm != null");
@@ -73,6 +88,12 @@ namespace Cachifier
         /// <returns>A byte array</returns>
         public byte[] Hashify(string path)
         {
+            Contract.Ensures(Contract.Result<byte[]>() != null);
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentException("The path is null, empty or consists solely of whitespace", "path");
+            }
+           
             using (var stream = File.OpenRead(path))
             {
                 return this.Hashify(stream);

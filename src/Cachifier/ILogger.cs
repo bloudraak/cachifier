@@ -24,31 +24,23 @@
 
 #endregion
 
-namespace Cachifier.Build.Tasks
+namespace Cachifier
 {
-    using System;
-    using System.IO;
+    using Cachifier.Build.Tasks.Annotations;
 
-    public class FileManager
+    public interface ILogger
     {
-        /// <summary>
-        /// Gets the relative folder
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="baseFolder"></param>
-        /// <returns></returns>
-        public static string GetRelativePath(string path, string baseFolder)
+        void Log(MessageImportance importance, [NotNull] string format, [NotNull] params object[] args);
+    }
+
+    public class NullLogger : ILogger
+    {
+        #region Implementation of ILogger
+
+        public void Log(MessageImportance importance, string format, params object[] args)
         {
-            var pathUri = new Uri(path);
-            if (baseFolder[baseFolder.Length - 1] != Path.DirectorySeparatorChar)
-            {
-                baseFolder += Path.DirectorySeparatorChar;
-            }
-            var folderUri = new Uri(baseFolder);
-            return
-                Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri)
-                    .ToString()
-                    .Replace('/', Path.DirectorySeparatorChar));
         }
+
+        #endregion
     }
 }

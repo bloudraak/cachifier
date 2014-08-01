@@ -14,6 +14,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{C2DC0C23
 		..\build\Version.targets = ..\build\Version.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cachifier.UnitTests", "Cachifier.UnitTests\Cachifier.UnitTests.csproj", "{A2CA26A2-AF9F-4A62-9C96-3897C287F63E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cachifier", "Cachifier\Cachifier.csproj", "{FCCB4F68-3AA5-4E15-BB66-E7BBE7F98EFD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +28,14 @@ Global
 		{96535580-8573-463C-97C7-2843D7EC2767}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{96535580-8573-463C-97C7-2843D7EC2767}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{96535580-8573-463C-97C7-2843D7EC2767}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2CA26A2-AF9F-4A62-9C96-3897C287F63E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2CA26A2-AF9F-4A62-9C96-3897C287F63E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2CA26A2-AF9F-4A62-9C96-3897C287F63E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2CA26A2-AF9F-4A62-9C96-3897C287F63E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCCB4F68-3AA5-4E15-BB66-E7BBE7F98EFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCCB4F68-3AA5-4E15-BB66-E7BBE7F98EFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCCB4F68-3AA5-4E15-BB66-E7BBE7F98EFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCCB4F68-3AA5-4E15-BB66-E7BBE7F98EFD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

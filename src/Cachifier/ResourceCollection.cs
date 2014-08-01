@@ -1,6 +1,8 @@
 ﻿namespace Cachifier.Build.Tasks
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Runtime.Serialization;
     using Cachifier.Build.Tasks.Annotations;
 
@@ -50,6 +52,31 @@
         protected ResourceCollection(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
+        }
+
+        /// <summary>
+        /// Adds the elements of the specified collection
+        /// </summary>
+        /// <param name="collection">The collection</param>
+        /// <exception cref="ArgumentNullException">collection is null</exception>
+        public void AddRange([NotNull] IEnumerable<Resource> collection)
+        {
+            if (collection == null)
+            {
+                throw new ArgumentNullException("collection");
+            }
+            foreach (var resource in collection)
+            {
+                this.Add(resource);
+            }
+        }
+
+        public IEnumerable<string> GetHashifiedPaths()
+        {
+            return this.Where(item => item != null)
+                .Select(item => item.HashifiedPath)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item.ToLower());
         }
     }
 }

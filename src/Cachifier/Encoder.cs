@@ -29,6 +29,7 @@ namespace Cachifier
     using System;
     using System.Numerics;
     using System.Text;
+    using Cachifier.Build.Tasks.Annotations;
 
     /// <summary>
     ///     Encodes the byte array to base36
@@ -40,8 +41,12 @@ namespace Cachifier
         /// </summary>
         /// <param name="bytes">The bytes to convert to</param>
         /// <returns>The base36 encoded version of a byte array</returns>
-        public string Encode(byte[] bytes)
+        public string Encode([NotNull] byte[] bytes)
         {
+            if (bytes == null)
+            {
+                throw new ArgumentNullException("bytes");
+            }
             const string alphabet = "0123456789abcdefghijklmnopqrstuvwxyz";
             return this.Encode(bytes, alphabet);
         }
@@ -52,8 +57,16 @@ namespace Cachifier
         /// <param name="bytes">The bytes to convert</param>
         /// <param name="alphabet">The alphabet to convert too</param>
         /// <returns>The encoded byte array</returns>
-        public string Encode(byte[] bytes, string alphabet)
+        public string Encode([NotNull] byte[] bytes, [NotNull] string alphabet)
         {
+            if (bytes == null)
+            {
+                throw new ArgumentNullException("bytes");
+            }
+            if (alphabet == null)
+            {
+                throw new ArgumentNullException("alphabet");
+            }
             return this.Encode(bytes, alphabet.ToCharArray());
         }
 
@@ -63,8 +76,16 @@ namespace Cachifier
         /// <param name="bytes">The bytes to convert</param>
         /// <param name="alphabet">The alphabet to convert too</param>
         /// <returns>The encoded byte array</returns>
-        public string Encode(byte[] bytes, char[] alphabet)
+        public string Encode([NotNull] byte[] bytes, [NotNull] char[] alphabet)
         {
+            if (bytes == null)
+            {
+                throw new ArgumentNullException("bytes");
+            }
+            if (alphabet == null)
+            {
+                throw new ArgumentNullException("alphabet");
+            }
             var dividend = new BigInteger(bytes);
             var builder = new StringBuilder();
             var divisor = alphabet.Length;

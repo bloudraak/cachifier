@@ -4,14 +4,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{96535580-8573-463C-97C7-2843D7EC2767}</ProjectGuid>
+    <ProjectGuid>{FCCB4F68-3AA5-4E15-BB66-E7BBE7F98EFD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cachifier.Build.Tasks</RootNamespace>
-    <AssemblyName>Cachifier.Build.Tasks</AssemblyName>
+    <RootNamespace>Cachifier</RootNamespace>
+    <AssemblyName>Cachifier</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <BuildPackage Condition="'$(BuildPackage)' == ''">true</BuildPackage>
     <CodeContractsAssemblyMode>0</CodeContractsAssemblyMode>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -24,7 +23,7 @@
     <WarningLevel>4</WarningLevel>
     <CodeContractsEnableRuntimeChecking>True</CodeContractsEnableRuntimeChecking>
     <CodeContractsRuntimeOnlyPublicSurface>True</CodeContractsRuntimeOnlyPublicSurface>
-    <CodeContractsRuntimeThrowOnFailure>False</CodeContractsRuntimeThrowOnFailure>
+    <CodeContractsRuntimeThrowOnFailure>True</CodeContractsRuntimeThrowOnFailure>
     <CodeContractsRuntimeCallSiteRequires>True</CodeContractsRuntimeCallSiteRequires>
     <CodeContractsRuntimeSkipQuantifiers>False</CodeContractsRuntimeSkipQuantifiers>
     <CodeContractsRunCodeAnalysis>True</CodeContractsRunCodeAnalysis>
@@ -58,7 +57,7 @@
     <CodeContractsBeingOptimisticOnExternal>True</CodeContractsBeingOptimisticOnExternal>
     <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
     <CodeContractsReferenceAssembly>Build</CodeContractsReferenceAssembly>
-    <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
+    <CodeContractsAnalysisWarningLevel>2</CodeContractsAnalysisWarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -103,34 +102,43 @@
     <CodeContractsBeingOptimisticOnExternal>True</CodeContractsBeingOptimisticOnExternal>
     <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
     <CodeContractsReferenceAssembly>Build</CodeContractsReferenceAssembly>
-    <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
+    <CodeContractsAnalysisWarningLevel>2</CodeContractsAnalysisWarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuidLogger.cs" />
-    <Compile Include="CachifierTask.cs" />
+    <Compile Include="ByteArrayExtensions.cs" />
+    <Compile Include="CodeGenerator.cs" />
+    <Compile Include="Encoder.cs" />
+    <Compile Include="FileManager.cs" />
+    <Compile Include="Hashifier.cs" />
+    <Compile Include="IEncoder.cs" />
+    <Compile Include="IHashifier.cs" />
+    <Compile Include="ILogger.cs" />
+    <Compile Include="MessageImportance.cs" />
+    <Compile Include="Processor.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Cachifier.Build.Tasks.nuspec" />
-    <None Include="Cachifier.Build.Tasks.targets" />
-    <None Include="install.ps1" />
-    <None Include="uninstall.ps1" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Cachifier\Cachifier.csproj">
-      <Project>{fccb4f68-3aa5-4e15-bb66-e7bbe7f98efd}</Project>
-      <Name>Cachifier</Name>
-    </ProjectReference>
+    <Compile Include="Resource.cs" />
+    <Compile Include="ResourceCollection.cs" />
+    <Compile Include="ResourceCollector.cs" />
+    <Compile Include="ResourceFilter.cs" />
+    <Compile Include="ResourceNamingPolicy.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
 </Project>

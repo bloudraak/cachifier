@@ -26,8 +26,11 @@
 
 namespace Cachifier
 {
+    using System;
+    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
+    using Cachifier.Build.Tasks.Annotations;
 
     /// <summary>
     ///     Represents extension methods for byte arrays
@@ -40,10 +43,14 @@ namespace Cachifier
         /// <param name="bytes">The bytes to convert</param>
         /// <param name="seperator">The seperator</param>
         /// <returns>A string</returns>
-        public static string ToString(this byte[] bytes, string seperator)
+        public static string ToString([NotNull] this byte[] bytes, [NotNull] string seperator)
         {
-            var seperatorTotalLength = (seperator.Length*(bytes.Length - 1));
-            var bytesTotalLength = (bytes.Length*2);
+            Contract.Requires(bytes != null);
+            Contract.Requires(seperator != null); 
+            Contract.Requires((bytes.Length * 2 + seperator.Length * (bytes.Length - 1)) >= 0);
+
+            var seperatorTotalLength = (seperator.Length * (bytes.Length - 1));
+            var bytesTotalLength = (bytes.Length * 2);
             var stringBuilder = new StringBuilder(bytesTotalLength + seperatorTotalLength);
             var writer = new StringWriter(stringBuilder);
             bool first = true;
