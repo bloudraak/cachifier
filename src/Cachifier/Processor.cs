@@ -26,34 +26,84 @@
 
 namespace Cachifier
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.IO;
     using System.Linq;
     using Cachifier.Build.Tasks;
+    using Cachifier.Build.Tasks.Annotations;
 
     public class Processor
     {
-        public ILogger Logger
-        {
-            get;
-            set;
-        }
-
         private readonly string _assemblyName;
         private readonly string _cdnBaseUri;
+        private readonly CodeGenerator _codeGenerator;
         private readonly string[] _content;
-        private readonly string[] _exclusions;
         private readonly string[] _embeddedResources;
+        private readonly Encoder _encoder;
+        private readonly string[] _exclusions;
         private readonly ICollection<string> _extensions;
         private readonly bool _forceLowercase;
+        private readonly Hashifier _hashifier;
         private readonly string _outputPath2;
         private readonly string _projectDirectory;
+        private readonly ResourceNamingPolicy _resourceNamingPolicy;
         private readonly string _rootNamespace;
         private readonly string _staticMappingSourcePath;
 
-        public Processor(string[] embeddedResources, string[] content, string[] exclusions, string projectDirectory, string assemblyName, string rootNamespace, IEnumerable<string> extensions, string staticMappingSourcePath, bool forceLowercase, string outputPath2, string cdnBaseUri)
+        public Processor([NotNull] string[] embeddedResources,
+                         [NotNull] string[] content,
+                         [NotNull] string[] exclusions,
+                         [NotNull] string projectDirectory,
+                         [NotNull] string assemblyName,
+                         [NotNull] string rootNamespace,
+                         [NotNull] IEnumerable<string> extensions,
+                         [NotNull] string staticMappingSourcePath,
+                         bool forceLowercase,
+                         [NotNull] string outputPath2,
+                         [NotNull] string cdnBaseUri)
         {
+            if (embeddedResources == null)
+            {
+                throw new ArgumentNullException("embeddedResources");
+            }
+            if (content == null)
+            {
+                throw new ArgumentNullException("content");
+            }
+            if (exclusions == null)
+            {
+                throw new ArgumentNullException("exclusions");
+            }
+            if (projectDirectory == null)
+            {
+                throw new ArgumentNullException("projectDirectory");
+            }
+            if (assemblyName == null)
+            {
+                throw new ArgumentNullException("assemblyName");
+            }
+            if (rootNamespace == null)
+            {
+                throw new ArgumentNullException("rootNamespace");
+            }
+            if (extensions == null)
+            {
+                throw new ArgumentNullException("extensions");
+            }
+            if (staticMappingSourcePath == null)
+            {
+                throw new ArgumentNullException("staticMappingSourcePath");
+            }
+            if (outputPath2 == null)
+            {
+                throw new ArgumentNullException("outputPath2");
+            }
+            if (cdnBaseUri == null)
+            {
+                throw new ArgumentNullException("cdnBaseUri");
+            }
             this._embeddedResources = embeddedResources;
             this._content = content;
             this._exclusions = exclusions;
@@ -66,6 +116,16 @@ namespace Cachifier
             this._outputPath2 = outputPath2;
             this._cdnBaseUri = cdnBaseUri;
             this.Logger = new NullLogger();
+            this._hashifier = new Hashifier();
+            this._encoder = new Encoder();
+            this._resourceNamingPolicy = new ResourceNamingPolicy();
+            this._codeGenerator = new CodeGenerator();
+        }
+
+        public ILogger Logger
+        {
+            get;
+            set;
         }
 
         public string[] EmbeddedResources
@@ -150,56 +210,92 @@ namespace Cachifier
 
         public void Process()
         {
-            Contract.Requires(((Cachifier.Processor)this).Logger != null);
-            var hashifier = new Hashifier();
-            var encoder = new Encoder();
+            Contract.Requires(((Processor) this).Logger != null);
 
-            // 
-            // Resources to process
-            //
             var resources = new ResourceCollection();
+            this.CollectResources(resources);
+            this.HashifyResources(resources);
+            this.UpdateHashifiedPaths(resources);
+            this.CreateDirectories(resources);
+            this.CopyFiles(resources);
+            this.DeleteOrphanFiles(resources);
+            this.GenerateScriptManagerMapping(resources);
+        }
 
-            //
-            // Collect Resources
-            //
-            Logger.Log(MessageImportance.High, "Collecting static resources from \"{0}\"", _projectDirectory);
-            var resourceFilter = new ResourceFilter(this.Extensions, _exclusions);
-            var collector = new ResourceCollector(this.ProjectDirectory, resourceFilter);
+        private void GenerateScriptManagerMapping([NotNull] IEnumerable<Resource> resources)
+        {
+            if (resources == null)
+            {
+                throw new ArgumentNullException("resources");
+            }
+            if (!string.IsNullOrWhiteSpace(this.StaticMappingSourcePath))
+            {
+                this._codeGenerator.GenerateSourceMappingSource(resources,
+                    this.RootNamespace,
+                    this.StaticMappingSourcePath,
+                    this.ForceLowercase,
+                    this.OutputPath2,
+                    this.CdnBaseUri);
+            }
+        }
 
-            resources.AddRange(collector.CollectEmbeddedResources(this.AssemblyName,
-                this.RootNamespace,
-                this.EmbeddedResources));
+        private void DeleteOrphanFiles(ResourceCollection resources)
+        {
+            var set1 = new HashSet<string>(resources.GetHashifiedPaths());
+            var set2 = new HashSet<string>(this.GetFiles());
+            set2.ExceptWith(set1);
+            foreach (var s in set2)
+            {
+                this.Logger.Log(MessageImportance.High, string.Format("Deleting \"{0}\" because it is an orphan.", s));
+                File.Delete(s);
+            }
+        }
 
-            resources.AddRange(collector.CollectContent(this.Content));
-            Logger.Log(MessageImportance.High, string.Format("Collected \"{0}\" static resources.", resources.Count));
-
-            //
-            // Hashify Resources
-            //
+        private void CopyFiles(IEnumerable<Resource> resources)
+        {
             foreach (var resource in resources)
             {
-                Logger.Log(MessageImportance.High, string.Format("Computing the SHA256 hash of \"{0}\".", resource.Path));
-                var contentHash = hashifier.Hashify(resource.Path);
-
-                var bytes = contentHash;
-                if (bytes != null && bytes.Length > 0)
-                {
-                    Logger.Log(MessageImportance.High, string.Format("Encoding the SHA256 hash of \"{0}\" [{1}].", resource.Path, bytes.ToString(",")));
-                }
-                resource.ContentHash = encoder.Encode(contentHash);
+                var sourceFileName = resource.Path;
+                var destFileName = resource.HashifiedPath;
+                this.Logger.Log(MessageImportance.High,
+                    string.Format("Copying directory \"{0}\" to \"{1}\".", sourceFileName, destFileName));
+                File.Copy(sourceFileName, destFileName, true);
             }
+        }
 
-            //
-            // Update Paths
-            //
-            var resourceNamingPolicy = new ResourceNamingPolicy();
+        private void CreateDirectories(IEnumerable<Resource> resources)
+        {
+            var directories = resources.Where(item => item != null)
+                .Select(item => item.HashifiedPath)
+                .Select(Path.GetDirectoryName)
+                .Where(item => item != null);
+
+            foreach (var directory in directories)
+            {
+                if (directory == null)
+                {
+                    continue;
+                }
+
+                if (!Directory.Exists(directory))
+                {
+                    this.Logger.Log(MessageImportance.High,
+                        string.Format("Creating directory \"{0}\" because it does not exist.", directory));
+                    Directory.CreateDirectory(directory);
+                }
+            }
+        }
+
+        private void UpdateHashifiedPaths(IEnumerable<Resource> resources)
+        {
             foreach (var resource in resources)
             {
                 Contract.Assume(resource != null);
-                Logger.Log(MessageImportance.High, string.Format("Computing the new filename of \"{0}\".", resource.Path));
+                this.Logger.Log(MessageImportance.High,
+                    string.Format("Computing the new filename of \"{0}\".", resource.Path));
                 var directoryName = Path.GetDirectoryName(resource.RelativePath);
                 var outputPath = this.OutputPath2;
-                var hashifiedFileName = resourceNamingPolicy.GetFileName(resource);
+                var hashifiedFileName = this._resourceNamingPolicy.GetFileName(resource);
 
                 Contract.Assume(this.ProjectDirectory != null);
                 if (string.IsNullOrWhiteSpace(directoryName))
@@ -231,72 +327,48 @@ namespace Cachifier
                 resource.RelativeHashifiedPath = FileManager.GetRelativePath(resource.HashifiedPath,
                     this.ProjectDirectory);
             }
+        }
 
-            //
-            // Create the directories
-            // 
-            var directories = resources.Where(item => item != null)
-                .Select(item => item.HashifiedPath)
-                .Select(Path.GetDirectoryName)
-                .Where(item => item != null);
-
-            foreach (var directory in directories)
-            {
-                if (directory == null)
-                {
-                    continue;
-                }
-
-                if (!Directory.Exists(directory))
-                {
-                    Logger.Log(MessageImportance.High, string.Format("Creating directory \"{0}\" because it does not exist.", directory));
-                    Directory.CreateDirectory(directory);
-                }
-            }
-
-            //
-            // Copy files
-            //
+        private void HashifyResources(IEnumerable<Resource> resources)
+        {
             foreach (var resource in resources)
             {
-                var sourceFileName = resource.Path;
-                var destFileName = resource.HashifiedPath;
-                Logger.Log(MessageImportance.High, string.Format("Copying directory \"{0}\" to \"{1}\".", sourceFileName, destFileName));
-                File.Copy(sourceFileName, destFileName, true);
-            }
+                this.Logger.Log(MessageImportance.High,
+                    string.Format("Computing the SHA256 hash of \"{0}\".", resource.Path));
+                var contentHash = this._hashifier.Hashify(resource.Path);
 
-            //
-            // Delete Orphan Files
-            //
-            var set1 = new HashSet<string>(resources.GetHashifiedPaths());
-            var set2 = new HashSet<string>(this.GetFiles());
-            set2.ExceptWith(set1);
-            foreach (var s in set2)
-            {
-                Logger.Log(MessageImportance.High, string.Format("Deleting \"{0}\" because it is an orphan.", s));
-                File.Delete(s);
+                var bytes = contentHash;
+                if (bytes != null && bytes.Length > 0)
+                {
+                    this.Logger.Log(MessageImportance.High,
+                        string.Format("Encoding the SHA256 hash of \"{0}\" [{1}].", resource.Path, bytes.ToString(",")));
+                }
+                resource.ContentHash = this._encoder.Encode(contentHash);
             }
+        }
 
-            //
-            // Generate Script Mapping Source
-            // 
-            if (!string.IsNullOrWhiteSpace(this.StaticMappingSourcePath))
-            {
-                new CodeGenerator().GenerateSourceMappingSource(resources,
-                    this.RootNamespace,
-                    this.StaticMappingSourcePath,
-                    this.ForceLowercase,
-                    this.OutputPath2,
-                    this.CdnBaseUri);
-            }
+        private void CollectResources(ResourceCollection resources)
+        {
+            this.Logger.Log(MessageImportance.High, "Collecting static resources from \"{0}\"", this._projectDirectory);
+            var resourceFilter = new ResourceFilter(this.Extensions, this._exclusions);
+            var collector = new ResourceCollector(this.ProjectDirectory, resourceFilter);
+
+            resources.AddRange(collector.CollectEmbeddedResources(this.AssemblyName,
+                this.RootNamespace,
+                this.EmbeddedResources));
+
+            resources.AddRange(collector.CollectContent(this.Content));
+            this.Logger.Log(MessageImportance.High,
+                string.Format("Collected \"{0}\" static resources.", resources.Count));
         }
 
         private IEnumerable<string> GetFiles()
         {
-            Contract.Requires(((Cachifier.Processor) this).ProjectDirectory != null);
+            Contract.Requires(((Processor) this).ProjectDirectory != null);
             Contract.Requires(this.OutputPath2 != null);
 
-            return Directory.EnumerateFiles(Path.Combine(this.ProjectDirectory, this.OutputPath2),
+            var path = Path.Combine(this.ProjectDirectory, this.OutputPath2);
+            return Directory.EnumerateFiles(path,
                 "*",
                 SearchOption.AllDirectories)
                 .Select(item => item.ToLower());

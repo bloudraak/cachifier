@@ -28,13 +28,14 @@ namespace Cachifier
 {
     using System;
     using System.CodeDom.Compiler;
+    using System.Collections.Generic;
     using System.IO;
     using Cachifier.Build.Tasks;
     using Cachifier.Build.Tasks.Annotations;
 
     public class CodeGenerator
     {
-        public void GenerateSourceMappingSource([NotNull] ResourceCollection resources, string ns, string path, bool forceLowercase, string outputPath, string cdnBaseUri)
+        public void GenerateSourceMappingSource([NotNull] IEnumerable<Resource> resources, string ns, string path, bool forceLowercase, string outputPath, string cdnBaseUri)
         {
             if (resources == null)
             {
