@@ -99,13 +99,10 @@ namespace Cachifier
                         writer.Indent++;
                         writer.WriteLine("definition = new ScriptResourceDefinition();");
 
+                        string relativeUri;
                         if (!resource.IsEmbedded)
                         {
-                            var relativeUri = resource.RelativePath.Replace('\\', '/');
-                            if (forceLowercase)
-                            {
-                                relativeUri = relativeUri.ToLowerInvariant();
-                            }
+                            relativeUri = NormalizeRelativeUri(resource.RelativePath, forceLowercase);
                             writer.WriteLine("if(IsDebuggingEnabled)");
                             writer.WriteLine("{");
                             writer.Indent++;
@@ -116,11 +113,7 @@ namespace Cachifier
                             writer.WriteLine("else");
                             writer.WriteLine("{");
                             writer.Indent++;
-                            relativeUri = resource.RelativeHashifiedPath.Replace('\\', '/');
-                            if (forceLowercase)
-                            {
-                                relativeUri = relativeUri.ToLowerInvariant();
-                            }
+                            relativeUri = NormalizeRelativeUri(resource.RelativeHashifiedPath, forceLowercase);
                             writer.WriteLine("definition.Path = \"~/{1}/{0}\";", relativeUri, outputPath);
                             writer.WriteLine("definition.DebugPath = \"~/{1}/{0}\";", relativeUri, outputPath);
                             writer.Indent--;
@@ -132,21 +125,28 @@ namespace Cachifier
                             writer.WriteLine("definition.ResourceName = \"{0}\";", resource.Name);
                         }
 
-                       
-                        var relativeUri1 = resource.RelativeHashifiedPath.Replace('\\', '/');
-                        if (forceLowercase)
+                        if (resource.RelativeHashifiedPath != null)
                         {
-                            relativeUri1 = relativeUri1.ToLowerInvariant();
+                            if (!string.IsNullOrWhiteSpace(cdnBaseUri))
+                            {
+                                Uri baseUri;
+                                if (Uri.TryCreate(cdnBaseUri, UriKind.Absolute, out baseUri))
+                                {
+                                    relativeUri = NormalizeRelativeUri(resource.RelativeHashifiedPath, forceLowercase);
+                                    // Double escape the damn string because creating a Uri will unescape it... Go figure.  
+                                    relativeUri = NormalizeRelativeUri(relativeUri, forceLowercase);
+                                    Uri uri;
+                                    if (Uri.TryCreate(baseUri, relativeUri, out uri))
+                                    {
+                                        writer.WriteLine("definition.CdnPath = \"{0}\";", uri);
+                                        writer.WriteLine("definition.CdnDebugPath = \"{0}\";", uri);
+                                        writer.WriteLine("definition.CdnSupportsSecureConnection = true;");
+                                    }
+                                }
+                            }
                         }
-                        var baseUri = new Uri(cdnBaseUri, UriKind.Absolute);
-                        var uri1 = new Uri(baseUri, relativeUri1);
-                        var uri = uri1;
 
-                        writer.WriteLine("definition.CdnPath = \"{0}\";", uri);
-                        writer.WriteLine("definition.CdnDebugPath = \"{0}\";", uri);
-                        writer.WriteLine("definition.CdnSupportsSecureConnection = true;");
-                        writer.WriteLine(
-                                         "ScriptManager.ScriptResourceMapping.AddDefinition(\"{0}\", {1}, definition);",
+                        writer.WriteLine("ScriptManager.ScriptResourceMapping.AddDefinition(\"{0}\", {1}, definition);",
                             resource.Name,
                             assemblyName);
                         writer.WriteLine();
@@ -176,6 +176,21 @@ namespace Cachifier
                     writer.WriteLine("}");
                 }
             }
+        }
+
+        [NotNull]
+        private static string NormalizeRelativeUri([NotNull] string relativePath, bool forceLowercase)
+        {
+            if (relativePath == null)
+            {
+                throw new ArgumentNullException("relativePath");
+            }
+            var relativeUri = relativePath.Replace('\\', '/');
+            if (forceLowercase)
+            {
+                relativeUri = relativeUri.ToLowerInvariant();
+            }
+            return Uri.EscapeUriString(relativeUri);
         }
     }
 }
