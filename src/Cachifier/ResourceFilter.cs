@@ -38,17 +38,21 @@
         /// <returns>true if its a resource, false otherwise</returns>
         private bool IsResource(string path)
         {
-           
+            
+
             if (path == null)
             {
                 return true;
             }
 
-            foreach (string item in this._exclusions)
+            if (this._exclusions != null)
             {
-                if (path.Equals(item, StringComparison.InvariantCultureIgnoreCase))
+                foreach (string item in this._exclusions)
                 {
-                    return false;
+                    if (path.Equals(item, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        return false;
+                    }
                 }
             }
 

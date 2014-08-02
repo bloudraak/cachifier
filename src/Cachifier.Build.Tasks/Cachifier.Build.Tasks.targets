@@ -9,7 +9,6 @@
     <AssemblyName Condition="'$(AssemblyName)' == ''"></AssemblyName>
     <RootNamespace Condition="'$(RootNamespace)' == ''"></RootNamespace>
     <StaticMappingSourcePath Condition="'$(StaticMappingSourcePath)' == ''">$(MSBuildProjectDirectory)\MapScriptResources.cs</StaticMappingSourcePath>
-    <CdnBaseUri Condition="'$(CdnBaseUri)' == ''">http://example.com/$(MSBuildProjectName)</CdnBaseUri>
     <ForceLowercase Condition="'$(ForceLowercase)' == ''">true</ForceLowercase>
   </PropertyGroup>
   <!--======================================================================================================================-->
@@ -61,7 +60,7 @@
       ManifestPath="$(StaticResourcesManifest)"
       RootNamespace="$(RootNamespace)"
       AssemblyName="$(AssemblyName)"
-      CdnBaseUri="$(CdnBaseUri)"
+      CdnBaseUri="$(StaticContentBaseUri)"
       StaticMappingSourcePath="$(StaticMappingSourcePath)"
       ForceLowercase="$(ForceLowercase)"
       ProjectDirectory="$(StaticProjectDirectory)">

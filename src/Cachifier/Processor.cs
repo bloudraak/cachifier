@@ -51,6 +51,7 @@ namespace Cachifier
         private readonly ResourceNamingPolicy _resourceNamingPolicy;
         private readonly string _rootNamespace;
         private readonly string _staticMappingSourcePath;
+        private ILogger _logger;
 
         public Processor([NotNull] string[] embeddedResources,
                          [NotNull] string[] content,
@@ -100,10 +101,7 @@ namespace Cachifier
             {
                 throw new ArgumentNullException("outputPath2");
             }
-            if (cdnBaseUri == null)
-            {
-                throw new ArgumentNullException("cdnBaseUri");
-            }
+            
             this._embeddedResources = embeddedResources;
             this._content = content;
             this._exclusions = exclusions;
@@ -115,103 +113,33 @@ namespace Cachifier
             this._forceLowercase = forceLowercase;
             this._outputPath2 = outputPath2;
             this._cdnBaseUri = cdnBaseUri;
-            this.Logger = new NullLogger();
+            this._logger = new NullLogger();
             this._hashifier = new Hashifier();
             this._encoder = new Encoder();
             this._resourceNamingPolicy = new ResourceNamingPolicy();
             this._codeGenerator = new CodeGenerator();
         }
 
+        [NotNull]
         public ILogger Logger
         {
-            get;
-            set;
-        }
-
-        public string[] EmbeddedResources
-        {
             get
             {
-                return this._embeddedResources;
+                Contract.Ensures(Contract.Result<ILogger>() != null);
+                return this._logger;
             }
-        }
-
-        public string[] Content
-        {
-            get
+            set
             {
-                return this._content;
-            }
-        }
-
-        public string ProjectDirectory
-        {
-            get
-            {
-                return this._projectDirectory;
-            }
-        }
-
-        public string AssemblyName
-        {
-            get
-            {
-                return this._assemblyName;
-            }
-        }
-
-        public string RootNamespace
-        {
-            get
-            {
-                return this._rootNamespace;
-            }
-        }
-
-        public IEnumerable<string> Extensions
-        {
-            get
-            {
-                return this._extensions;
-            }
-        }
-
-        public string StaticMappingSourcePath
-        {
-            get
-            {
-                return this._staticMappingSourcePath;
-            }
-        }
-
-        public bool ForceLowercase
-        {
-            get
-            {
-                return this._forceLowercase;
-            }
-        }
-
-        public string OutputPath2
-        {
-            get
-            {
-                return this._outputPath2;
-            }
-        }
-
-        public string CdnBaseUri
-        {
-            get
-            {
-                return this._cdnBaseUri;
+                if (value == null)
+                {
+                    throw new ArgumentNullException("value");
+                }
+                this._logger = value;
             }
         }
 
         public void Process()
         {
-            Contract.Requires(((Processor) this).Logger != null);
-
             var resources = new ResourceCollection();
             this.CollectResources(resources);
             this.HashifyResources(resources);
@@ -228,19 +156,34 @@ namespace Cachifier
             {
                 throw new ArgumentNullException("resources");
             }
-            if (!string.IsNullOrWhiteSpace(this.StaticMappingSourcePath))
+
+            if (string.IsNullOrWhiteSpace(this._staticMappingSourcePath))
+            {
+                return;
+            }
+
+            if (this._codeGenerator == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(this._staticMappingSourcePath))
             {
                 this._codeGenerator.GenerateSourceMappingSource(resources,
-                    this.RootNamespace,
-                    this.StaticMappingSourcePath,
-                    this.ForceLowercase,
-                    this.OutputPath2,
-                    this.CdnBaseUri);
+                    this._rootNamespace,
+                    this._staticMappingSourcePath,
+                    this._forceLowercase,
+                    this._outputPath2,
+                    this._cdnBaseUri);
             }
         }
 
-        private void DeleteOrphanFiles(ResourceCollection resources)
+        private void DeleteOrphanFiles([NotNull] ResourceCollection resources)
         {
+            if (resources == null)
+            {
+                throw new ArgumentNullException("resources");
+            }
             var set1 = new HashSet<string>(resources.GetHashifiedPaths());
             var set2 = new HashSet<string>(this.GetFiles());
             set2.ExceptWith(set1);
@@ -251,8 +194,12 @@ namespace Cachifier
             }
         }
 
-        private void CopyFiles(IEnumerable<Resource> resources)
+        private void CopyFiles([NotNull] IEnumerable<Resource> resources)
         {
+            if (resources == null)
+            {
+                throw new ArgumentNullException("resources");
+            }
             foreach (var resource in resources)
             {
                 var sourceFileName = resource.Path;
@@ -263,8 +210,12 @@ namespace Cachifier
             }
         }
 
-        private void CreateDirectories(IEnumerable<Resource> resources)
+        private void CreateDirectories([NotNull] IEnumerable<Resource> resources)
         {
+            if (resources == null)
+            {
+                throw new ArgumentNullException("resources");
+            }
             var directories = resources.Where(item => item != null)
                 .Select(item => item.HashifiedPath)
                 .Select(Path.GetDirectoryName)
@@ -286,51 +237,58 @@ namespace Cachifier
             }
         }
 
-        private void UpdateHashifiedPaths(IEnumerable<Resource> resources)
+        private void UpdateHashifiedPaths([NotNull] IEnumerable<Resource> resources)
         {
+            if (resources == null)
+            {
+                throw new ArgumentNullException("resources");
+            }
             foreach (var resource in resources)
             {
                 Contract.Assume(resource != null);
                 this.Logger.Log(MessageImportance.High,
                     string.Format("Computing the new filename of \"{0}\".", resource.Path));
                 var directoryName = Path.GetDirectoryName(resource.RelativePath);
-                var outputPath = this.OutputPath2;
+                var outputPath = this._outputPath2;
                 var hashifiedFileName = this._resourceNamingPolicy.GetFileName(resource);
 
-                Contract.Assume(this.ProjectDirectory != null);
                 if (string.IsNullOrWhiteSpace(directoryName))
                 {
                     if (outputPath != null)
                     {
-                        resource.HashifiedPath = Path.Combine(this.ProjectDirectory, outputPath, hashifiedFileName);
+                        resource.HashifiedPath = Path.Combine(this._projectDirectory, outputPath, hashifiedFileName);
                     }
                     else
                     {
-                        resource.HashifiedPath = Path.Combine(this.ProjectDirectory, hashifiedFileName);
+                        resource.HashifiedPath = Path.Combine(this._projectDirectory, hashifiedFileName);
                     }
                 }
                 else
                 {
                     if (outputPath != null)
                     {
-                        resource.HashifiedPath = Path.Combine(this.ProjectDirectory,
+                        resource.HashifiedPath = Path.Combine(this._projectDirectory,
                             outputPath,
                             directoryName,
                             hashifiedFileName);
                     }
                     else
                     {
-                        resource.HashifiedPath = Path.Combine(this.ProjectDirectory, directoryName, hashifiedFileName);
+                        resource.HashifiedPath = Path.Combine(this._projectDirectory, directoryName, hashifiedFileName);
                     }
                 }
 
                 resource.RelativeHashifiedPath = FileManager.GetRelativePath(resource.HashifiedPath,
-                    this.ProjectDirectory);
+                    this._projectDirectory);
             }
         }
 
-        private void HashifyResources(IEnumerable<Resource> resources)
+        private void HashifyResources([NotNull] IEnumerable<Resource> resources)
         {
+            if (resources == null)
+            {
+                throw new ArgumentNullException("resources");
+            }
             foreach (var resource in resources)
             {
                 this.Logger.Log(MessageImportance.High,
@@ -347,31 +305,44 @@ namespace Cachifier
             }
         }
 
-        private void CollectResources(ResourceCollection resources)
+        private void CollectResources([NotNull] ResourceCollection resources)
         {
+            if (resources == null)
+            {
+                throw new ArgumentNullException("resources");
+            }
             this.Logger.Log(MessageImportance.High, "Collecting static resources from \"{0}\"", this._projectDirectory);
-            var resourceFilter = new ResourceFilter(this.Extensions, this._exclusions);
-            var collector = new ResourceCollector(this.ProjectDirectory, resourceFilter);
+            var resourceFilter = new ResourceFilter(this._extensions, this._exclusions);
+            var collector = new ResourceCollector(this._projectDirectory, resourceFilter);
 
-            resources.AddRange(collector.CollectEmbeddedResources(this.AssemblyName,
-                this.RootNamespace,
-                this.EmbeddedResources));
+            resources.AddRange(collector.CollectEmbeddedResources(this._assemblyName,
+                this._rootNamespace,
+                this._embeddedResources));
 
-            resources.AddRange(collector.CollectContent(this.Content));
+            resources.AddRange(collector.CollectContent(this._content));
             this.Logger.Log(MessageImportance.High,
                 string.Format("Collected \"{0}\" static resources.", resources.Count));
         }
-
+        
+        [NotNull]
         private IEnumerable<string> GetFiles()
         {
-            Contract.Requires(((Processor) this).ProjectDirectory != null);
-            Contract.Requires(this.OutputPath2 != null);
+            Contract.Ensures(Contract.Result<IEnumerable<string>>() != null);
 
-            var path = Path.Combine(this.ProjectDirectory, this.OutputPath2);
+            var path = Path.Combine(this._projectDirectory, this._outputPath2);
             return Directory.EnumerateFiles(path,
                 "*",
                 SearchOption.AllDirectories)
                 .Select(item => item.ToLower());
+        }
+
+        [ContractInvariantMethod]
+        private void ContractInvariantMethod()
+        {
+            Contract.Invariant(this._outputPath2 != null);
+            Contract.Invariant(this._projectDirectory != null);
+            Contract.Invariant(this._logger != null);
+            Contract.Invariant(this._rootNamespace != null);
         }
     }
 }

@@ -71,6 +71,7 @@
             }
         }
 
+        [NotNull]
         public IEnumerable<string> GetHashifiedPaths()
         {
             return this.Where(item => item != null)
